@@ -10,8 +10,289 @@ export const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'X-Application': APP_TOKEN,
+    'Accept': 'image/avif,image/webp',
   },
 });
+
+// =============================================================================
+// TYPE DEFINITIONS (matching YummyAnime API response structures)
+// =============================================================================
+
+// YummyAnime API Anime Detail Response (GET /anime/{url})
+export interface YummyAnimeDetailResponse {
+  anime_id: number;
+  anime_status: {
+    title: string;
+    alias: 'released' | 'ongoing' | 'announcement';
+    value: 0 | 1 | 2;
+  };
+  anime_url: string;
+  poster: {
+    small: string;
+    medium: string;
+    big: string;
+    huge: string;
+    fullsize: string;
+    mega: string;
+  };
+  rating: {
+    average: number;
+    kp_rating?: number;
+    anidub_rating?: number;
+    counters: number;
+    myanimelist_rating?: number;
+    shikimori_rating?: number;
+    worldart_rating?: number;
+  };
+  title: string;
+  type: {
+    name: string;
+    value: number;
+    shortname: string;
+    alias: string;
+  };
+  year: number;
+  description: string;
+  views: number;
+  season: 1 | 2 | 3 | 4;
+  min_age: {
+    value: 0 | 1 | 2 | 3 | 4 | 5;
+    title: string;
+    title_long: string;
+  };
+  user?: {
+    list?: {
+      is_fav: boolean;
+      list?: {
+        title: string;
+        href: string;
+        id: 0 | 1 | 2 | 3 | 5;
+      };
+    };
+    rating?: number;
+  };
+  remote_ids?: {
+    worldart_id?: number;
+    worldart_type?: 'animation' | 'cinema';
+    kp_id?: number;
+    anidub_id?: number;
+    sr_id?: number;
+    anilibria_alias?: string;
+    shikimori_id?: number;
+    myanimelist_id?: number;
+  };
+  top?: {
+    category: number;
+    global: number;
+  };
+  blocked_in?: string[];
+  original?: string;
+  duration?: number;
+  trailers_count?: number;
+  lists_count?: number;
+  other_titles?: string[];
+  creators?: Array<{ title: string; id: number; url: string }>;
+  studios?: Array<{ title: string; id: number; url: string }>;
+  videos?: Array<{
+    video_id: number;
+    iframe_url: string;
+    data: {
+      dubbing: string;
+      player: string;
+      player_id: number;
+    };
+    number: string;
+    date: number;
+    index: number;
+    skips?: {
+      ending?: { time: number; length: number };
+      opening?: { time: number; length: number };
+    };
+    views: number;
+    duration: number;
+  }>;
+  genres?: Array<{
+    title: string;
+    id: number;
+    alias: string;
+    url: string;
+  }>;
+  viewing_order?: Array<{
+    title: string;
+    anime_id: number;
+    type: {
+      name: string;
+      value: number;
+      shortname: string;
+      alias: string;
+    };
+    anime_url: string;
+    anime_status: {
+      title: string;
+      alias: string;
+      value: number;
+    };
+    description: string;
+    poster: {
+      small: string;
+      medium: string;
+      big: string;
+      huge: string;
+      fullsize: string;
+      mega: string;
+    };
+    user?: {
+      list?: {
+        list: {
+          title: string;
+          href: string;
+          id: number;
+        };
+        is_fav: boolean;
+      };
+      rating?: number;
+    };
+    year: number;
+    data?: {
+      id: number;
+      index: number;
+      text: string;
+    };
+  }>;
+  translates?: Array<{
+    title: string;
+    href: string;
+    value: number;
+  }>;
+  episodes?: {
+    aired: number;
+    count: number;
+    next_date?: number;
+    prev_date?: number;
+  };
+  comments_count?: number;
+  reviews_count?: number;
+  random_screenshots?: Array<{
+    sizes: {
+      small: string;
+      full: string;
+    };
+    id: number;
+    time: number;
+    episode: string;
+  }>;
+  posts_count?: number;
+  partner_videos_count?: number;
+}
+
+// YummyAnime API Reviews Response (GET /anime/{id}/reviews)
+export interface YummyAnimeReview {
+  anime_id: number;
+  type: 'approved' | 'waiting' | 'declined';
+  review_id: number;
+  avatar?: {
+    big: string;
+    full: string;
+    small: string;
+  };
+  user_roles?: string[];
+  user_id?: number;
+  total_likes?: number;
+  nickname?: string;
+  views: number;
+  update_date: number;
+  rating: {
+    average: number;
+    category: Record<string, number>;
+  };
+  published_by?: number;
+  commentable: boolean;
+  create_date: number;
+  check_comment?: string;
+  likes: {
+    likes: number;
+    dislikes: number;
+    vote: number;
+  };
+  author: {
+    id: number;
+    nickname: string;
+    avatars: {
+      big: string;
+      full: string;
+      small: string;
+    };
+  };
+  anime: YummyAnimeDetailResponse;
+  comments_count?: number;
+  text_preview?: string;
+}
+
+export interface YummyAnimeReviewsResponse {
+  reviews: YummyAnimeReview[];
+  can_add: boolean;
+}
+
+// YummyAnime API User List Response (GET /users/{id}/lists)
+export interface YummyUserAnimeRate {
+  rating_counters?: number;
+  season?: number;
+  top?: {
+    global: number;
+    category: number;
+  };
+  views?: number;
+  anime_id: number;
+  anime_status?: {
+    title: string;
+    alias: string;
+    value: number;
+  };
+  anime_url: string;
+  date: number;
+  genres?: Array<{
+    title: string;
+    id: number;
+    alias: string;
+    url: string;
+  }>;
+  poster: {
+    small: string;
+    medium: string;
+    big: string;
+    huge: string;
+    fullsize: string;
+    mega: string;
+  };
+  rating: number;
+  title: string;
+  type: {
+    name: string;
+    value: number;
+    shortname: string;
+    alias: string;
+  };
+  user?: {
+    list?: {
+      is_fav: boolean;
+      list?: {
+        title: string;
+        href: string;
+        id: 0 | 1 | 2 | 3 | 5;
+      };
+    };
+    rating?: number;
+  };
+  year?: number;
+  remote_ids?: {
+    worldart_id?: number;
+    shikimori_id?: number;
+    myanimelist_id?: number;
+    sr_id?: number;
+    kp_id?: number;
+    worldart_type?: string;
+  };
+}
 
 // Request interceptor: Add Authorization header with Bearer token
 api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -197,14 +478,16 @@ export const animeApi = {
         // Remove page as API uses offset
         page: undefined,
       } 
-    });
+    }).then(res => res.data.response);
   },
 
   getById: (id: number) =>
-    api.get<AnimeDetailResponse>(`/anime/${id}`),
+    api.get<{ response: YummyAnimeDetailResponse }>(`/anime/${id}`)
+      .then(res => res.data.response),
 
   getByUrl: (url: string) =>
-    api.get<AnimeDetailResponse>(`/anime/${url}`),
+    api.get<{ response: YummyAnimeDetailResponse }>(`/anime/${url}`)
+      .then(res => res.data.response),
 
   getRandom: () =>
     api.get<AnimeCatalogItem[]>('/anime', { params: { limit: 1, order: 'random' } })
