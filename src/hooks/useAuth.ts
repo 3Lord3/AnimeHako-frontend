@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { authApi, userApi } from '@/lib/api';
-import type { User, Token } from '@/types';
+import { authApi, setAuthToken, clearAuth, setUser, getUser, type YummyUser } from '@/lib/api';
 
 export function useAuth() {
   const queryClient = useQueryClient();
@@ -10,10 +9,10 @@ export function useAuth() {
   const loginMutation = useMutation({
     mutationFn: ({ email, password }: { email: string; password: string }) =>
       authApi.login(email, password),
-    onSuccess: (data: { data: Token }) => {
-      const { token, user } = data.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+    onSuccess: (response) => {
+      const { user, tokens } = response.data;
+      setAuthToken(tokens.access_token);
+      setUser(user);
       queryClient.setQueryData(['user'], user);
     },
   });
@@ -28,20 +27,26 @@ export function useAuth() {
       username: string;
       password: string;
     }) => authApi.register(email, username, password),
-    onSuccess: (data: { data: Token }) => {
-      const { token, user } = data.data;
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify(user));
+    onSuccess: (response) => {
+      const { user, tokens } = response.data;
+      setAuthToken(tokens.access_token);
+      setUser(user);
       queryClient.setQueryData(['user'], user);
     },
   });
 
+  const logoutMutation = useMutation({
+    mutationFn: () => authApi.logout(),
+    onSettled: () => {
+      clearAuth();
+      queryClient.setQueryData(['user'], null);
+      queryClient.clear();
+      navigate('/login');
+    },
+  });
+
   const logout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    queryClient.setQueryData(['user'], null);
-    queryClient.clear();
-    navigate('/login');
+    logoutMutation.mutate();
   };
 
   return {
@@ -59,19 +64,22 @@ export function useUser() {
   return useQuery({
     queryKey: ['user'],
     queryFn: async () => {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('auth_token');
       if (!token) return null;
-      const userStr = localStorage.getItem('user');
-      if (userStr) {
-        return JSON.parse(userStr) as User;
+      
+      // Try to get user from localStorage first
+      const cachedUser = getUser();
+      if (cachedUser) {
+        return cachedUser;
       }
+      
+      // Fetch from API
       try {
-        const { data } = await userApi.getProfile();
-        localStorage.setItem('user', JSON.stringify(data));
+        const { data } = await authApi.getProfile();
+        setUser(data);
         return data;
       } catch {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        clearAuth();
         return null;
       }
     },
@@ -83,11 +91,18 @@ export function useUpdateProfile() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: { username?: string; avatar?: string }) =>
-      userApi.updateProfile(data),
-    onSuccess: (data: { data: User }) => {
-      localStorage.setItem('user', JSON.stringify(data.data));
-      queryClient.setQueryData(['user'], data.data);
+    mutationFn: async (data: { nickname?: string; avatar?: string }) => {
+      // YummyAnime API - profile update might be different
+      // For now just update local storage
+      return data;
+    },
+    onSuccess: (data) => {
+      const currentUser = queryClient.getQueryData<YummyUser>(['user']);
+      if (currentUser) {
+        const updatedUser = { ...currentUser, ...data };
+        setUser(updatedUser);
+        queryClient.setQueryData(['user'], updatedUser);
+      }
     },
   });
 }

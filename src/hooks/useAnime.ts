@@ -1,46 +1,137 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { animeApi, genresApi, tagsApi, userApi } from '@/lib/api';
+import { animeApi, userListApi, reviewsApi } from '@/lib/api';
 import { useUser } from './useAuth';
-import type {
-  UserAnimeCreate,
-  UserAnimeUpdate,
-} from '@/types';
+import type { UserAnimeUpdate, AnimeStatus } from '@/types';
+
+// =============================================================================
+// ANIME LIST / CATALOG
+// =============================================================================
 
 export function useAnimeList(params?: {
   page?: number;
   limit?: number;
   search?: string;
-  genres?: string;
-  year?: number;
+  genre?: string | string[];
+  year?: string;
   min_rating?: number;
-  tags?: string;
-  sort?: string;
+  kind?: string;
+  status?: string;
+  order?: string;
+  mylist?: string;
 }) {
   return useQuery({
-    queryKey: ['anime', 'list', params],
+    queryKey: ['anime', 'catalog', params],
     queryFn: async () => {
-      const { data } = await animeApi.getList(params);
-      return data;
+      const response = await animeApi.getCatalog(params);
+      // YummyAnime API returns { response: [...] }
+      const animeArray = response.data.response || [];
+      
+      // Normalize anime items for backward compatibility
+      const normalizedData = (animeArray || [])
+        .filter((item): item is NonNullable<typeof item> => item != null)
+        .map((item: any) => {
+        // Get ID - API uses 'anime_id'
+        const id = item.anime_id;
+        
+        // Extract poster URL - API returns object with different sizes
+        let posterUrl = null;
+        if (item.poster) {
+          if (typeof item.poster === 'string') {
+            posterUrl = item.poster;
+          } else if (item.poster.huge) {
+            posterUrl = item.poster.huge;
+          } else if (item.poster.mega) {
+            posterUrl = item.poster.mega;
+          } else if (item.poster.big) {
+            posterUrl = item.poster.big;
+          } else if (item.poster.medium) {
+            posterUrl = item.poster.medium;
+          } else if (item.poster.small) {
+            posterUrl = item.poster.small;
+          }
+        }
+        
+        // Extract score/rating - API uses rating.average
+        let scoreStr = null;
+        if (item.rating?.average != null) {
+          const avg = item.rating.average;
+          scoreStr = avg != null ? String(avg.toFixed(2)) : null;
+        }
+        
+        // Extract kind/type - API uses type.alias (tv, movie, ova, etc.)
+        const kind = item.type?.alias ?? null;
+        
+        // Extract status - API uses anime_status.title
+        const status = item.anime_status?.title || null;
+        
+        // Extract year
+        const year = item.year || null;
+        
+        // Extract description
+        const description = item.description || null;
+        
+        return {
+          id: id,
+          name: item.title || '',
+          russian: item.title || null,
+          poster: posterUrl,
+          cover: null, // API doesn't provide separate cover field
+          url: item.anime_url || String(id),
+          kind: kind,
+          score: scoreStr,
+          status: status,
+          episodes: item.episodes || null,
+          episodes_aired: item.episodes_aired || null,
+          aired_on: item.aired_on || null,
+          released_on: item.released_on || null,
+          // Additional fields
+          title: item.title,
+          description: description,
+          duration: item.duration,
+          rating: item.rating,
+          genres: item.genres,
+          year: year,
+        };
+      });
+      
+      return {
+        data: normalizedData,
+        page: 1,
+        total_pages: 1,
+        total: normalizedData.length,
+      };
     },
   });
 }
+
+// =============================================================================
+// ANIME DETAIL
+// =============================================================================
 
 export function useAnimeDetail(id: number) {
   return useQuery({
     queryKey: ['anime', 'detail', id],
     queryFn: async () => {
-      const { data } = await animeApi.getDetail(id);
+      const { data } = await animeApi.getById(id);
       return data;
     },
     enabled: !!id,
   });
 }
 
+// =============================================================================
+// RANDOM ANIME
+// =============================================================================
+
 export function useRandomAnime() {
   return useQuery({
     queryKey: ['anime', 'random'],
     queryFn: async () => {
-      const { data } = await animeApi.getRandom();
+      const randomAnime = await animeApi.getRandom();
+      if (!randomAnime) return null;
+      
+      // Fetch full details for the random anime
+      const { data } = await animeApi.getById(randomAnime.id);
       return data;
     },
     retry: false,
@@ -48,57 +139,77 @@ export function useRandomAnime() {
   });
 }
 
+// =============================================================================
+// ANIME SCREENSHOTS (from detail)
+// =============================================================================
+
 export function useAnimeScreenshots(id: number) {
   return useQuery({
     queryKey: ['anime', 'screenshots', id],
     queryFn: async () => {
-      const { data } = await animeApi.getScreenshots(id);
-      return data.screenshots;
+      const { data } = await animeApi.getById(id);
+      return data.screenshots || [];
     },
     enabled: !!id,
   });
 }
+
+// =============================================================================
+// ANIME REVIEWS
+// =============================================================================
 
 export function useAnimeReviews(id: number, limit?: number, offset?: number) {
   return useQuery({
     queryKey: ['anime', 'reviews', id, limit, offset],
     queryFn: async () => {
-      const { data } = await animeApi.getReviews(id, limit, offset);
+      const { data } = await reviewsApi.getByAnimeId(id, limit, offset);
       return data;
     },
     enabled: !!id,
   });
 }
 
+// =============================================================================
+// GENRES
+// =============================================================================
+
 export function useGenres() {
   return useQuery({
     queryKey: ['genres'],
     queryFn: async () => {
-      const { data } = await genresApi.getAll();
+      const { data } = await animeApi.getGenres();
       return data;
     },
   });
 }
 
-export function useTags() {
-  return useQuery({
-    queryKey: ['tags'],
-    queryFn: async () => {
-      const { data } = await tagsApi.getAll();
-      return data;
-    },
-  });
-}
+// =============================================================================
+// USER ANIME LIST
+// =============================================================================
 
-export function useUserAnimeList(status?: string, favorites?: boolean) {
+export function useUserAnimeList(status?: AnimeStatus, favorites?: boolean) {
   const { data: user } = useUser();
   
   return useQuery({
     queryKey: ['user', 'anime', status, favorites],
     queryFn: async () => {
+      if (!user) return [];
+      
       try {
-        const { data } = await userApi.getAnimeList(status, favorites || undefined);
-        return data;
+        const { data } = await userListApi.getMyLists();
+        
+        // Filter by status if provided
+        let result = data.flatMap(list => list.anime);
+        
+        if (status) {
+          result = result.filter(rate => rate.status === status);
+        }
+        
+        if (favorites) {
+          result = result.filter(rate => rate.text?.includes('favorite'));
+        }
+        
+        return result;
       } catch (error: unknown) {
         // Return empty array on auth errors to prevent redirect on public pages
         if (error && typeof error === 'object' && 'response' in error) {
@@ -114,11 +225,40 @@ export function useUserAnimeList(status?: string, favorites?: boolean) {
   });
 }
 
+// =============================================================================
+// USER ANIME RATE FOR SPECIFIC ANIME
+// =============================================================================
+
+export function useUserAnimeRate(animeId: number) {
+  return useQuery({
+    queryKey: ['user', 'anime', 'rate', animeId],
+    queryFn: async () => {
+      try {
+        const { data } = await userListApi.getAnimeList(animeId);
+        return data;
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!animeId,
+  });
+}
+
+// =============================================================================
+// MUTATIONS
+// =============================================================================
+
 export function useAddToList() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: UserAnimeCreate) => userApi.addToList(data),
+    mutationFn: (data: { animeId: number; status: AnimeStatus; episodes?: number; score?: number; text?: string }) =>
+      userListApi.addToList(data.animeId, {
+        status: data.status,
+        episodes: data.episodes,
+        score: data.score,
+        text: data.text,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user', 'anime'] });
     },
@@ -130,7 +270,12 @@ export function useUpdateListEntry() {
 
   return useMutation({
     mutationFn: ({ animeId, data }: { animeId: number; data: UserAnimeUpdate }) =>
-      userApi.updateListEntry(animeId, data),
+      userListApi.addToList(animeId, {
+        status: data.status || undefined,
+        episodes: data.episodes,
+        score: data.score,
+        text: data.text,
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user', 'anime'] });
     },
@@ -141,7 +286,7 @@ export function useRemoveFromList() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (animeId: number) => userApi.removeFromList(animeId),
+    mutationFn: (animeId: number) => userListApi.removeFromList(animeId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user', 'anime'] });
     },
@@ -152,22 +297,45 @@ export function useToggleFavorite() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ animeId, isFavorite }: { animeId: number; isFavorite: boolean }) =>
-      isFavorite
-        ? userApi.removeFromFavorites(animeId)
-        : userApi.addToFavorites(animeId),
+    mutationFn: async ({ animeId, isFavorite }: { animeId: number; isFavorite: boolean }) => {
+      if (isFavorite) {
+        return userListApi.removeFromFavorites(animeId);
+      } else {
+        return userListApi.addToFavorites(animeId);
+      }
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['user', 'anime'] });
     },
   });
 }
 
+// =============================================================================
+// FAVORITES
+// =============================================================================
+
 export function useFavorites() {
+  const { data: user } = useUser();
+  
   return useQuery({
-    queryKey: ['user', 'anime', 'favorites'],
+    queryKey: ['user', 'favorites'],
     queryFn: async () => {
-      const { data } = await userApi.getAnimeList();
-      return data.filter((item) => item.is_favorite);
+      if (!user) return [];
+      
+      try {
+        const { data } = await userListApi.getMyLists();
+        // Filter anime that have 'favorite' in text field
+        return data.flatMap(list => list.anime).filter(rate => rate.text?.includes('favorite'));
+      } catch (error: unknown) {
+        if (error && typeof error === 'object' && 'response' in error) {
+          const err = error as { response?: { status?: number } };
+          if (err.response?.status === 401) {
+            return [];
+          }
+        }
+        throw error;
+      }
     },
+    enabled: !!user,
   });
 }
