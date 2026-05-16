@@ -124,10 +124,13 @@ export function TournamentParticipantSelector({
                       />
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-sm sm:text-sm text-foreground truncate">
-                          {anime.title}
+                          {anime.russian || anime.name}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {anime.year || '—'} • {anime.genres?.slice(0, 2).join(', ') || '—'}
+                          {anime.aired_on ? anime.aired_on.split('-')[0] : '—'} • {(() => {
+                            const genres = 'genre' in anime && Array.isArray(anime.genre) ? anime.genre : [];
+                            return genres.slice(0, 2).map((g: { russian?: string | null; name: string }) => g.russian || g.name).join(', ') || '—';
+                          })()}
                         </p>
                       </div>
                       <Plus className="w-4 h-4 text-muted-foreground flex-shrink-0" />

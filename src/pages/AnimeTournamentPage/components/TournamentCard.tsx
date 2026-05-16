@@ -67,18 +67,18 @@ export function TournamentCard({
         )}
         
         {/* Genres in top-right corner */}
-        {showDetails && anime.genres && anime.genres.length > 0 && (
+        {showDetails && 'genre' in anime && anime.genre && anime.genre.length > 0 && (
           <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex flex-wrap gap-1 z-10 max-w-[60%] justify-end">
-            {anime.genres.slice(0, compact ? 2 : 2).map((genre) => (
+            {anime.genre.slice(0, compact ? 2 : 2).map((g: { id: number; name: string; russian: string | null }) => (
               <Badge 
-                key={genre} 
+                key={g.id} 
                 variant="secondary" 
                 className={cn(
                   "text-muted-foreground border-0",
                   compact ? "text-xs sm:text-sm px-2 py-1 bg-black/60" : "text-xs px-2 py-0.5 bg-black/60"
                 )}
               >
-                {genre}
+                {g.russian || g.name}
               </Badge>
             ))}
           </div>
@@ -89,9 +89,9 @@ export function TournamentCard({
           <h3 className={cn(
             "font-bold line-clamp-2",
             compact ? "text-sm sm:text-base md:text-lg" : "text-lg mb-1"
-          )}>{anime.title}</h3>
-          {anime.title_en && (
-            <p className={cn("text-gray-200 line-clamp-1", compact ? "text-xs sm:text-sm" : "text-xs mb-2")}>{anime.title_en}</p>
+          )}>{anime.russian || anime.name}</h3>
+          {anime.name !== anime.russian && anime.name && (
+            <p className={cn("text-gray-200 line-clamp-1", compact ? "text-xs sm:text-sm" : "text-xs mb-2")}>{anime.name}</p>
           )}
           
           {showDetails && (
