@@ -13,7 +13,10 @@ interface AnimeCardProps {
 }
 
 export function AnimeCard({ anime, showRating = true, userStatus, isFavorite }: AnimeCardProps) {
-  const rating = anime.rating ? (typeof anime.rating === 'number' ? anime.rating : Number(anime.rating)) : null;
+  // YummyAnime API uses 'name' and 'russian' fields instead of 'title'
+  const displayTitle = anime.russian || anime.name || 'Unknown';
+  
+  const rating = anime.score ? (typeof anime.score === 'number' ? anime.score : parseFloat(anime.score)) : null;
   const validRating = rating !== null && !isNaN(rating);
   
   return (
@@ -21,7 +24,7 @@ export function AnimeCard({ anime, showRating = true, userStatus, isFavorite }: 
       <div className="aspect-[3/4] relative overflow-hidden rounded-lg">
         <img
           src={getImageUrl(anime.poster)}
-          alt={anime.title}
+          alt={displayTitle}
           className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
         />
@@ -58,7 +61,7 @@ export function AnimeCard({ anime, showRating = true, userStatus, isFavorite }: 
         {/* Gradient overlay for title */}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/90 via-black/60 to-transparent p-3 pt-12">
           <h3 className="font-semibold text-sm text-white line-clamp-2">
-            {anime.title}
+            {displayTitle}
           </h3>
         </div>
       </div>
