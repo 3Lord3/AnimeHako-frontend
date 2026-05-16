@@ -12,29 +12,37 @@ import { AnimeDetailPageSkeleton } from '@/components/loaders/PageSkeletons';
 import { AnimeCharacteristics } from './AnimeDetailPage/components/AnimeCharacteristics';
 
 export function AnimeDetailPage() {
-  const { id } = useParams<{ id: string }>();
-  const animeId = parseInt(id || '0');
+  const { url } = useParams<{ url: string }>();
   const navigate = useNavigate();
   const { data: user } = useUser();
 
-  const { data: anime, isLoading } = useAnimeDetail(animeId);
-  const { data: reviews } = useAnimeReviews(animeId, 5);
+  const { data: anime, isLoading } = useAnimeDetail(url || '');
+  const { data: reviews } = useAnimeReviews(anime?.anime_id || 0, 5);
+
+  // Extract anime_id from API response
+  const animeId = anime?.anime_id || 0;
   const { data: userAnimeList } = useUserAnimeList();
   const { mutate: addToList } = useAddToList();
   const { mutate: toggleFavorite } = useToggleFavorite();
   const { mutate: updateListEntry } = useUpdateListEntry();
 
   // Find user's rate for this anime
+  // YummyAnime API: userAnimeList items have anime_id directly
   const userAnime = userAnimeList?.find((rate) => rate.anime_id === animeId);
-  const isFavorite = userAnime?.text?.includes('favorite') || false;
+  // YummyAnime API: is_favorite is stored in user.list.is_fav on anime object
+  const isFavorite = anime?.user?.list?.is_fav || false;
+  // YummyAnime API: user status is stored in user.list.list.id
+  const userStatus = anime?.user?.list?.list?.id ?? userAnime?.list?.id ?? null;
 
   const handleAddToList = (status: StatusType) => {
     if (!user) {
       navigate('/login');
       return;
     }
+    // Map status string to YummyAnime API list ID
+    const statusId = status === 'watch_now' ? 0 : status === 'will' ? 1 : status === 'watched' ? 2 : status === 'lost' ? 3 : 5;
     // If already in list with the same status, clear status
-    if (userAnime?.status === status) {
+    if (userStatus === statusId) {
       updateListEntry(
         { animeId, data: { status: null } },
         { onError: () => {} }
@@ -71,9 +79,11 @@ export function AnimeDetailPage() {
     return <div className="text-center py-12">Аниме не найдено</div>;
   }
 
-  // YummyAnime API uses 'name' and 'russian' instead of 'title'
-  const displayTitle = anime.russian || anime.name;
-  const englishTitle = anime.name !== anime.russian ? anime.name : null;
+  // YummyAnime API uses 'title' field directly
+  const displayTitle = anime.title;
+  // YummyAnime API may have other_titles for alternative names
+  const otherTitles = anime.other_titles;
+  const englishTitle = otherTitles && otherTitles.length > 0 ? otherTitles[0] : null;
 
   return (
     <div className="space-y-8">
@@ -94,12 +104,12 @@ export function AnimeDetailPage() {
         Назад
       </Button>
 
-      {/* Hero with blurred background */}
-      {anime.cover && (
+      {/* Hero with blurred background - YummyAnime uses poster.huge or poster.big */}
+      {anime.poster && (
         <div className="fixed inset-0 -z-10">
           <div className="absolute inset-0 bg-gradient-to-b from-background/90 to-background" />
           <img
-            src={getImageUrl(anime.cover)}
+            src={getImageUrl(anime.poster.huge || anime.poster.big || anime.poster.fullsize)}
             alt=""
             className="w-full h-full object-cover blur-xl scale-110"
           />
@@ -110,7 +120,7 @@ export function AnimeDetailPage() {
         {/* Poster column with buttons below */}
         <div className="flex-shrink-0 flex flex-col items-center">
           <img
-            src={getImageUrl(anime.poster)}
+            src={getImageUrl(anime.poster?.medium || anime.poster?.big || anime.poster?.huge)}
             alt={displayTitle}
             className="w-64 rounded-lg shadow-lg"
           />
@@ -120,7 +130,7 @@ export function AnimeDetailPage() {
                 variant={isFavorite ? 'default' : 'outline'}
                 size="icon"
                 onClick={handleToggleFavorite}
-                className="cursor-pointer text-foreground"
+                className="cursor-pointer text-foreground hover:bg-muted"
                 title={isFavorite ? 'В любимом' : 'В любимое'}
               >
                 <Heart className={cn(
@@ -128,26 +138,30 @@ export function AnimeDetailPage() {
                   isFavorite ? 'fill-current text-white' : 'text-foreground'
                 )} />
               </Button>
-              {statusOptions.map((status) => (
-                <Button
-                  key={status}
-                  variant={userAnime?.status === status ? 'default' : 'outline'}
-                  size="icon"
-                  onClick={() => handleAddToList(status)}
-                  className="cursor-pointer"
-                  title={STATUS_LABELS[status]}
-                >
-                  <span className={userAnime?.status === status ? 'text-white' : 'text-foreground'}>
-                    {STATUS_ICONS[status]}
-                  </span>
-                </Button>
-              ))}
+              {statusOptions.map((status) => {
+                  const statusId = status === 'watch_now' ? 0 : status === 'will' ? 1 : status === 'watched' ? 2 : status === 'lost' ? 3 : 5;
+                  const isActive = userStatus === statusId;
+                  return (
+                  <Button
+                    key={status}
+                    variant={isActive ? 'default' : 'outline'}
+                    size="icon"
+                    onClick={() => handleAddToList(status)}
+                    className="cursor-pointer"
+                    title={STATUS_LABELS[status]}
+                  >
+                    <span className={isActive ? 'text-white' : 'text-foreground'}>
+                      {STATUS_ICONS[status]}
+                    </span>
+                  </Button>
+                  )
+                })}
             </div>
           )}
         </div>
         <div className="flex-1 space-y-4">
           <h1 className="text-3xl font-bold text-foreground select-text">{displayTitle}</h1>
-          {englishTitle && (
+          {englishTitle && englishTitle !== displayTitle && (
             <p className="text-xl text-muted-foreground select-text">{englishTitle}</p>
           )}
 
@@ -167,6 +181,7 @@ export function AnimeDetailPage() {
         </Card>
       )}
 
+      {/* Reviews Section - YummyAnime API structure */}
       {reviews && reviews.length > 0 && (
         <Card>
           <CardHeader>
@@ -174,17 +189,21 @@ export function AnimeDetailPage() {
           </CardHeader>
           <CardContent className="space-y-4">
             {reviews.map((review) => (
-              <div key={review.id} className="border-b pb-4 last:border-0">
+              <div key={review.review_id} className="border-b pb-4 last:border-0">
                 <div className="flex items-center gap-2 mb-2">
-                  <strong>{review.author}</strong>
-                  {review.score && (
-                    <Badge variant="outline">{review.score}/10</Badge>
+                  {/* YummyAnime: author is an object with nickname */}
+                  <strong>{review.author?.nickname || 'Anonymous'}</strong>
+                  {/* YummyAnime: rating is an object with average */}
+                  {review.rating?.average && (
+                    <Badge variant="outline">{review.rating.average}/10</Badge>
                   )}
                   <span className="text-sm text-muted-foreground">
-                    {new Date(review.created_at).toLocaleDateString('ru-RU')}
+                    {review.create_date 
+                      ? new Date(review.create_date * 1000).toLocaleDateString('ru-RU')
+                      : ''}
                   </span>
                 </div>
-                <p className="text-muted-foreground">{review.text}</p>
+                <p className="text-muted-foreground">{review.text_preview || review.text_html}</p>
               </div>
             ))}
           </CardContent>
