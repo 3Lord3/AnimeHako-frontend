@@ -35,8 +35,8 @@ function SwipeCard({ anime, onSwipe, isActive }: SwipeCardProps) {
   const handleTouchStart = (e: React.TouchEvent | React.MouseEvent) => {
     if (!isActive) return;
     setIsDragging(true);
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const clientX = 'touches' in e && e.touches.length > 0 ? e.touches[0].clientX : (e as React.MouseEvent).clientX;
+    const clientY = 'touches' in e && e.touches.length > 0 ? e.touches[0].clientY : (e as React.MouseEvent).clientY;
     startX.current = clientX;
     startY.current = clientY;
     // Prevent default to avoid scrolling while swiping
@@ -65,8 +65,8 @@ function SwipeCard({ anime, onSwipe, isActive }: SwipeCardProps) {
     if ('preventDefault' in e) {
       e.preventDefault();
     }
-    const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
-    const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+    const clientX = e.touches.length > 0 ? e.touches[0].clientX : 0;
+    const clientY = e.touches.length > 0 ? e.touches[0].clientY : 0;
     const deltaX = clientX - startX.current;
     const deltaY = clientY - startY.current;
     setTranslateX(deltaX);
@@ -118,7 +118,7 @@ function SwipeCard({ anime, onSwipe, isActive }: SwipeCardProps) {
         {anime.poster ? (
           <img
             src={getImageUrl(anime.poster)}
-            alt={anime.title}
+            alt={anime.russian || anime.name}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -146,15 +146,15 @@ function SwipeCard({ anime, onSwipe, isActive }: SwipeCardProps) {
         )}
         
         {/* Genres in top-left corner - larger */}
-        {anime.genres && anime.genres.length > 0 && (
+        {anime.genre && anime.genre.length > 0 && (
           <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-2 z-10">
-            {anime.genres.slice(0, 3).map((genre) => (
+            {anime.genre.slice(0, 3).map((genre) => (
               <Badge 
-                key={genre} 
+                key={genre.id} 
                 variant="secondary" 
                 className="text-sm px-2 py-1 bg-black/60 backdrop-blur-sm text-white border-0 font-medium"
               >
-                {genre}
+                {genre.russian || genre.name}
               </Badge>
             ))}
           </div>
@@ -162,9 +162,9 @@ function SwipeCard({ anime, onSwipe, isActive }: SwipeCardProps) {
         
         {/* Title and rating at bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-4 text-white select-text">
-          <h2 className="text-2xl font-bold mb-1">{anime.title}</h2>
-          {anime.title_en && (
-            <p className="text-sm text-gray-200 mb-3">{anime.title_en}</p>
+          <h2 className="text-2xl font-bold mb-1">{anime.russian || anime.name}</h2>
+          {anime.name !== anime.russian && anime.name && (
+            <p className="text-sm text-gray-200 mb-3">{anime.name}</p>
           )}
           <div className="flex items-center gap-4 text-sm">
             {anime.rating && (
@@ -218,7 +218,7 @@ export function AnimeMatcherPage() {
     
     if (direction === 'right' && currentAnime) {
       addToList(
-        { anime_id: currentAnime.id, status: 'planned' },
+        { animeId: currentAnime.id, status: 'planned' },
         {
           onSuccess: () => {
             loadNextAnime();
@@ -437,14 +437,14 @@ export function AnimeMatcherPage() {
               <p className="text-sm text-muted-foreground">Описание отсутствует</p>
             )}
             
-            {/* Tags */}
-            {currentAnime?.tags && currentAnime.tags.length > 0 && (
+            {/* Genres */}
+            {currentAnime?.genre && currentAnime.genre.length > 0 && (
               <div className="space-y-2 mt-4">
-                <h4 className="text-sm font-medium">Теги</h4>
+                <h4 className="text-sm font-medium">Жанры</h4>
                 <div className="flex flex-wrap gap-1.5">
-                  {currentAnime.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs">
-                      #{tag}
+                  {currentAnime.genre.map((g) => (
+                    <Badge key={g.id} variant="outline" className="text-xs">
+                      {g.russian || g.name}
                     </Badge>
                   ))}
                 </div>
@@ -458,7 +458,7 @@ export function AnimeMatcherPage() {
       <Dialog open={showDescriptionModal} onOpenChange={setShowDescriptionModal}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{currentAnime?.title}</DialogTitle>
+            <DialogTitle>{currentAnime?.russian || currentAnime?.name}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {currentAnime?.description && (
@@ -466,13 +466,13 @@ export function AnimeMatcherPage() {
                 {currentAnime.description}
               </p>
             )}
-            {currentAnime?.tags && currentAnime.tags.length > 0 && (
+            {currentAnime?.genre && currentAnime.genre.length > 0 && (
               <div className="space-y-2">
-                <h4 className="text-sm font-medium">Теги</h4>
+                <h4 className="text-sm font-medium">Жанры</h4>
                 <div className="flex flex-wrap gap-1.5">
-                  {currentAnime.tags.map((tag) => (
-                    <Badge key={tag} variant="outline" className="text-xs">
-                      #{tag}
+                  {currentAnime.genre.map((g) => (
+                    <Badge key={g.id} variant="outline" className="text-xs">
+                      {g.russian || g.name}
                     </Badge>
                   ))}
                 </div>
