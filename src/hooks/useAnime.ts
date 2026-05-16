@@ -23,8 +23,21 @@ export function useAnimeList(params?: {
     queryKey: ['anime', 'catalog', params],
     queryFn: async () => {
       const response = await animeApi.getCatalog(params);
-      // YummyAnime API returns { response: [...] }
-      const animeArray = response.data.response || [];
+      
+      let animeArray: any[] = [];
+      
+      // Check if response is an object with numeric keys (new API format)
+      if (response && typeof response === 'object' && !Array.isArray(response)) {
+        const keys = Object.keys(response);
+        // Check if keys are numeric (0, 1, 2...)
+        if (keys.length > 0 && keys.every(k => !isNaN(Number(k)))) {
+          animeArray = Object.values(response);
+        }
+      } else if (response && response.data && Array.isArray(response.data.response)) {
+        animeArray = response.data.response;
+      } else if (Array.isArray(response)) {
+        animeArray = response;
+      }
       
       // Normalize anime items for backward compatibility
       const normalizedData = (animeArray || [])
@@ -108,14 +121,23 @@ export function useAnimeList(params?: {
 // ANIME DETAIL
 // =============================================================================
 
-export function useAnimeDetail(id: number) {
+export function useAnimeDetail(idOrUrl: string | number) {
   return useQuery({
-    queryKey: ['anime', 'detail', id],
+    queryKey: ['anime', 'detail', idOrUrl],
     queryFn: async () => {
-      const { data } = await animeApi.getById(id);
-      return data;
+      const response = await animeApi.getByUrl(String(idOrUrl));
+      
+      // Handle object response with numeric keys (new API format)
+      if (response && typeof response === 'object' && !Array.isArray(response)) {
+        const keys = Object.keys(response);
+        if (keys.length === 1 && !isNaN(Number(keys[0]))) {
+          return response[keys[0]];
+        }
+      }
+      
+      return response;
     },
-    enabled: !!id,
+    enabled: !!idOrUrl,
   });
 }
 
@@ -197,16 +219,18 @@ export function useUserAnimeList(status?: AnimeStatus, favorites?: boolean) {
       
       try {
         const { data } = await userListApi.getMyLists();
+        let result = data.flatMap((list: { anime: unknown[] }) => list.anime);
         
         // Filter by status if provided
-        let result = data.flatMap(list => list.anime);
-        
         if (status) {
-          result = result.filter(rate => rate.status === status);
+          result = result.filter((rate: { user?: { list?: { list?: { id: number } } } }) => {
+            const listId = rate.user?.list?.list?.id;
+            return STATUS_MAPPINGS.yummyToAnimeStatus[listId] === status;
+          });
         }
         
         if (favorites) {
-          result = result.filter(rate => rate.text?.includes('favorite'));
+          result = result.filter((rate: { user?: { list?: { is_fav: boolean } } }) => rate.user?.list?.is_fav === true);
         }
         
         return result;
@@ -324,8 +348,8 @@ export function useFavorites() {
       
       try {
         const { data } = await userListApi.getMyLists();
-        // Filter anime that have 'favorite' in text field
-        return data.flatMap(list => list.anime).filter(rate => rate.text?.includes('favorite'));
+        // Filter anime that have is_fav = true (YummyAnime API)
+        return data.flatMap(list => list.anime).filter(rate => rate.user?.list?.is_fav === true);
       } catch (error: unknown) {
         if (error && typeof error === 'object' && 'response' in error) {
           const err = error as { response?: { status?: number } };
