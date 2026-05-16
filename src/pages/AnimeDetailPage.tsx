@@ -4,7 +4,7 @@ import { useUser } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Star, Calendar, Heart, ArrowLeft } from 'lucide-react';
+import { Heart, ArrowLeft } from 'lucide-react';
 import { getImageUrl } from '@/lib/imageUrl';
 import { cn } from '@/lib/utils';
 import { STATUS_LABELS, STATUS_ICONS, ALL_STATUSES, type StatusType } from '@/types/constants';
@@ -22,18 +22,18 @@ export function AnimeDetailPage() {
   const { data: userAnimeList } = useUserAnimeList();
   const { mutate: addToList } = useAddToList();
   const { mutate: toggleFavorite } = useToggleFavorite();
-
-
   const { mutate: updateListEntry } = useUpdateListEntry();
 
-  const userAnime = userAnimeList?.find((item) => item.anime_id === animeId);
+  // Find user's rate for this anime
+  const userAnime = userAnimeList?.find((rate) => rate.anime_id === animeId);
+  const isFavorite = userAnime?.text?.includes('favorite') || false;
 
   const handleAddToList = (status: StatusType) => {
     if (!user) {
       navigate('/login');
       return;
     }
-    // If already in list with the same status, clear status but keep favorite
+    // If already in list with the same status, clear status
     if (userAnime?.status === status) {
       updateListEntry(
         { animeId, data: { status: null } },
@@ -47,7 +47,7 @@ export function AnimeDetailPage() {
       );
     } else {
       addToList(
-        { anime_id: animeId, status },
+        { animeId, status, episodes: 0 },
         { onError: () => {} }
       );
     }
@@ -58,7 +58,7 @@ export function AnimeDetailPage() {
       navigate('/login');
       return;
     }
-    toggleFavorite({ animeId, isFavorite: userAnime?.is_favorite || false });
+    toggleFavorite({ animeId, isFavorite });
   };
 
   const statusOptions: StatusType[] = ALL_STATUSES;
@@ -70,6 +70,10 @@ export function AnimeDetailPage() {
   if (!anime) {
     return <div className="text-center py-12">Аниме не найдено</div>;
   }
+
+  // YummyAnime API uses 'name' and 'russian' instead of 'title'
+  const displayTitle = anime.russian || anime.name;
+  const englishTitle = anime.name !== anime.russian ? anime.name : null;
 
   return (
     <div className="space-y-8">
@@ -107,21 +111,21 @@ export function AnimeDetailPage() {
         <div className="flex-shrink-0 flex flex-col items-center">
           <img
             src={getImageUrl(anime.poster)}
-            alt={anime.title}
+            alt={displayTitle}
             className="w-64 rounded-lg shadow-lg"
           />
           {user && (
             <div className="flex gap-2 mt-4">
               <Button
-                variant={userAnime?.is_favorite ? 'default' : 'outline'}
+                variant={isFavorite ? 'default' : 'outline'}
                 size="icon"
                 onClick={handleToggleFavorite}
                 className="cursor-pointer text-foreground"
-                title={userAnime?.is_favorite ? 'В любимом' : 'В любимое'}
+                title={isFavorite ? 'В любимом' : 'В любимое'}
               >
                 <Heart className={cn(
                   'w-5 h-5',
-                  userAnime?.is_favorite ? 'fill-current text-white' : 'text-foreground'
+                  isFavorite ? 'fill-current text-white' : 'text-foreground'
                 )} />
               </Button>
               {statusOptions.map((status) => (
@@ -142,12 +146,9 @@ export function AnimeDetailPage() {
           )}
         </div>
         <div className="flex-1 space-y-4">
-          <h1 className="text-3xl font-bold text-foreground select-text">{anime.title}</h1>
-          {anime.title_en && (
-            <p className="text-xl text-muted-foreground select-text">{anime.title_en}</p>
-          )}
-          {anime.title_jp && (
-            <p className="text-lg text-muted-foreground select-text">{anime.title_jp}</p>
+          <h1 className="text-3xl font-bold text-foreground select-text">{displayTitle}</h1>
+          {englishTitle && (
+            <p className="text-xl text-muted-foreground select-text">{englishTitle}</p>
           )}
 
           <AnimeCharacteristics anime={anime} />
@@ -175,7 +176,7 @@ export function AnimeDetailPage() {
             {reviews.map((review) => (
               <div key={review.id} className="border-b pb-4 last:border-0">
                 <div className="flex items-center gap-2 mb-2">
-                  <strong>{review.author_name}</strong>
+                  <strong>{review.author}</strong>
                   {review.score && (
                     <Badge variant="outline">{review.score}/10</Badge>
                   )}
@@ -183,8 +184,7 @@ export function AnimeDetailPage() {
                     {new Date(review.created_at).toLocaleDateString('ru-RU')}
                   </span>
                 </div>
-                <h4 className="font-medium">{review.title}</h4>
-                <p className="text-muted-foreground">{review.content}</p>
+                <p className="text-muted-foreground">{review.text}</p>
               </div>
             ))}
           </CardContent>

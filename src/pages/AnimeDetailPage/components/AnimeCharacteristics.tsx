@@ -1,6 +1,7 @@
 import { Badge } from '@/components/ui/badge';
 import { Star, Calendar, Clock, Film, Building2, Tag } from 'lucide-react';
-import { SEASON_LABELS } from '@/types/constants';
+import { SEASON_LABELS, KIND_LABELS } from '@/types/constants';
+import type { AnimeDetailResponse } from '@/types';
 
 interface CharacteristicItemProps {
   label: string;
@@ -25,48 +26,73 @@ function CharacteristicItem({ label, value, icon }: CharacteristicItemProps) {
 }
 
 interface AnimeCharacteristicsProps {
-  anime: {
-    rating: number | null;
-    year: number | null;
-    season: string | null;
-    status: string | null;
-    episodes: number | null;
-    duration: number | null;
-    studio: string | null;
-    genres: string[];
-    tags: string[];
-  };
+  anime: AnimeDetailResponse;
   className?: string;
 }
 
+// Helper to extract year from aired_on date
+function extractYear(airedOn: string | null): number | null {
+  if (!airedOn) return null;
+  const year = parseInt(airedOn.split('-')[0]);
+  return isNaN(year) ? null : year;
+}
+
+// Helper to extract season from aired_on date
+function extractSeason(airedOn: string | null): string | null {
+  if (!airedOn) return null;
+  const month = parseInt(airedOn.split('-')[1]);
+  if (isNaN(month)) return null;
+  if (month >= 1 && month <= 3) return 'winter';
+  if (month >= 4 && month <= 6) return 'spring';
+  if (month >= 7 && month <= 9) return 'summer';
+  return 'autumn';
+}
+
 export function AnimeCharacteristics({ anime, className }: AnimeCharacteristicsProps) {
+  const year = extractYear(anime.aired_on);
+  const season = extractSeason(anime.aired_on);
+  const genres = anime.genre?.map(g => g.russian || g.name) || [];
+  const studios = anime.studio || [];
+
   return (
     <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-1 ${className || ''}`}>
       <CharacteristicItem
         label="Рейтинг"
         icon={<Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />}
         value={
-          anime.rating !== null && anime.rating !== undefined && !isNaN(Number(anime.rating)) ? (
-            <span className="font-medium text-foreground">{typeof anime.rating === 'number' ? anime.rating.toFixed(1) : Number(anime.rating).toFixed(1)}</span>
+          anime.rating && !isNaN(parseFloat(anime.rating)) ? (
+            <span className="font-medium text-foreground">{parseFloat(anime.rating).toFixed(1)}</span>
+          ) : anime.score && !isNaN(parseFloat(anime.score)) ? (
+            <span className="font-medium text-foreground">{parseFloat(anime.score).toFixed(1)}</span>
           ) : null
         }
       />
       <CharacteristicItem
         label="Год"
         icon={<Calendar className="w-3.5 h-3.5" />}
-        value={anime.year && anime.year > 0 ? <span className="text-foreground">{anime.year}</span> : null}
+        value={year ? <span className="text-foreground">{year}</span> : null}
       />
       <CharacteristicItem
         label="Сезон"
         icon={<Calendar className="w-3.5 h-3.5" />}
-        value={anime.season ? <span className="text-foreground">{SEASON_LABELS[anime.season] || anime.season}</span> : null}
+        value={season ? <span className="text-foreground">{SEASON_LABELS[season] || season}</span> : null}
+      />
+      <CharacteristicItem
+        label="Тип"
+        value={
+          anime.kind ? (
+            <Badge variant="secondary">
+              {KIND_LABELS[anime.kind] || anime.kind}
+            </Badge>
+          ) : null
+        }
       />
       <CharacteristicItem
         label="Статус"
         value={
           anime.status ? (
             <Badge variant={anime.status === 'ongoing' ? 'default' : 'secondary'}>
-              {anime.status === 'ongoing' ? 'Онгоинг' : 'Завершено'}
+              {anime.status === 'ongoing' ? 'Онгоинг' : anime.status === 'released' ? 'Вышло' : anime.status}
             </Badge>
           ) : null
         }
@@ -74,44 +100,43 @@ export function AnimeCharacteristics({ anime, className }: AnimeCharacteristicsP
       <CharacteristicItem
         label="Эпизоды"
         icon={<Film className="w-3.5 h-3.5" />}
-        value={anime.episodes && anime.episodes > 0 ? <span className="text-foreground">{anime.episodes} эп.</span> : null}
+        value={
+          anime.episodes ? (
+            <span className="text-foreground">
+              {anime.episodes} эп.
+              {anime.episodes_aired && anime.episodes_aired > 0 && ` (вышло ${anime.episodes_aired})`}
+            </span>
+          ) : anime.episodes_aired ? (
+            <span className="text-foreground">{anime.episodes_aired} эп.</span>
+          ) : null
+        }
       />
       <CharacteristicItem
         label="Длительность"
         icon={<Clock className="w-3.5 h-3.5" />}
         value={anime.duration && anime.duration > 0 ? <span className="text-foreground">{anime.duration} мин.</span> : null}
       />
-      <CharacteristicItem
-        label="Студия"
-        icon={<Building2 className="w-3.5 h-3.5" />}
-        value={anime.studio ? <span className="text-foreground">{anime.studio}</span> : null}
-      />
+      {studios.length > 0 && (
+        <CharacteristicItem
+          label="Студия"
+          icon={<Building2 className="w-3.5 h-3.5" />}
+          value={<span className="text-foreground">{studios.join(', ')}</span>}
+        />
+      )}
       <CharacteristicItem
         label="Жанры"
         icon={<Tag className="w-3.5 h-3.5" />}
         value={
-          anime.genres.length > 0 ? (
+          genres.length > 0 ? (
             <div className="flex flex-wrap gap-1">
-              {anime.genres.map((genre) => (
+              {genres.slice(0, 5).map((genre) => (
                 <Badge key={genre} variant="secondary">
                   {genre}
                 </Badge>
               ))}
-            </div>
-          ) : null
-        }
-      />
-      <CharacteristicItem
-        label="Теги"
-        icon={<Tag className="w-3.5 h-3.5" />}
-        value={
-          anime.tags.length > 0 ? (
-            <div className="flex flex-wrap gap-1">
-              {anime.tags.map((tag) => (
-                <Badge key={tag} variant="outline">
-                  {tag}
-                </Badge>
-              ))}
+              {genres.length > 5 && (
+                <Badge variant="outline">+{genres.length - 5}</Badge>
+              )}
             </div>
           ) : null
         }
