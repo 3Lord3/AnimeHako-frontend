@@ -36,7 +36,7 @@ export function ProfilePage() {
 
   const handleUpdateProfile = () => {
     updateProfile(
-      { username: editUsername },
+      { nickname: editUsername },
       {
         onSuccess: () => {
           setIsEditing(false);
