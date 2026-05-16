@@ -30,29 +30,54 @@ interface AnimeCharacteristicsProps {
   className?: string;
 }
 
-// Helper to extract year from aired_on date
-function extractYear(airedOn: string | null): number | null {
-  if (!airedOn) return null;
-  const year = parseInt(airedOn.split('-')[0]);
-  return isNaN(year) ? null : year;
+// Helper to get season label from season number (1-4)
+function getSeasonLabel(season: 1 | 2 | 3 | 4 | undefined): string | null {
+  if (!season) return null;
+  const seasonMap: Record<number, string> = {
+    1: 'winter',
+    2: 'spring',
+    3: 'summer',
+    4: 'autumn'
+  };
+  return SEASON_LABELS[seasonMap[season]] || seasonMap[season];
 }
 
-// Helper to extract season from aired_on date
-function extractSeason(airedOn: string | null): string | null {
-  if (!airedOn) return null;
-  const month = parseInt(airedOn.split('-')[1]);
-  if (isNaN(month)) return null;
-  if (month >= 1 && month <= 3) return 'winter';
-  if (month >= 4 && month <= 6) return 'spring';
-  if (month >= 7 && month <= 9) return 'summer';
-  return 'autumn';
+// Helper to get kind label from type object
+function getKindLabel(kind: { name?: string; shortname?: string } | undefined): string | null {
+  if (!kind) return null;
+  if (kind.shortname && KIND_LABELS[kind.shortname]) {
+    return KIND_LABELS[kind.shortname];
+  }
+  return kind.name || null;
 }
 
 export function AnimeCharacteristics({ anime, className }: AnimeCharacteristicsProps) {
-  const year = extractYear(anime.aired_on);
-  const season = extractSeason(anime.aired_on);
-  const genres = anime.genre?.map(g => g.russian || g.name) || [];
-  const studios = anime.studio || [];
+  // YummyAnime API structure
+  const year = anime.year;
+  const season = anime.season;
+  const genres = anime.genres?.map(g => g.title) || [];
+  const studios = anime.studios?.map(s => s.title) || anime.creators?.map(c => c.title) || [];
+  
+  // Rating from YummyAnime API
+  const rating = anime.rating?.average;
+  
+  // Status - anime_status.alias
+  const status = anime.anime_status?.alias;
+  const statusTitle = anime.anime_status?.title;
+  
+  // Episodes - episodes.count and episodes.aired
+  const episodesCount = anime.episodes?.count;
+  const episodesAired = anime.episodes?.aired;
+  
+  // Duration
+  const duration = anime.duration;
+  
+  // Type (kind) from YummyAnime API
+  const typeName = anime.type?.name;
+  const typeShortname = anime.type?.shortname;
+  const kindLabel = typeShortname && KIND_LABELS[typeShortname] 
+    ? KIND_LABELS[typeShortname] 
+    : typeName;
 
   return (
     <div className={`grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-1 ${className || ''}`}>
@@ -60,10 +85,8 @@ export function AnimeCharacteristics({ anime, className }: AnimeCharacteristicsP
         label="Рейтинг"
         icon={<Star className="w-3.5 h-3.5 fill-yellow-400 text-yellow-400" />}
         value={
-          anime.rating && !isNaN(parseFloat(anime.rating)) ? (
-            <span className="font-medium text-foreground">{parseFloat(anime.rating).toFixed(1)}</span>
-          ) : anime.score && !isNaN(parseFloat(anime.score)) ? (
-            <span className="font-medium text-foreground">{parseFloat(anime.score).toFixed(1)}</span>
+          rating && !isNaN(rating) ? (
+            <span className="font-medium text-foreground">{rating.toFixed(2)}</span>
           ) : null
         }
       />
@@ -75,14 +98,14 @@ export function AnimeCharacteristics({ anime, className }: AnimeCharacteristicsP
       <CharacteristicItem
         label="Сезон"
         icon={<Calendar className="w-3.5 h-3.5" />}
-        value={season ? <span className="text-foreground">{SEASON_LABELS[season] || season}</span> : null}
+        value={season ? <span className="text-foreground">{getSeasonLabel(season)}</span> : null}
       />
       <CharacteristicItem
         label="Тип"
         value={
-          anime.kind ? (
+          kindLabel ? (
             <Badge variant="secondary">
-              {KIND_LABELS[anime.kind] || anime.kind}
+              {kindLabel}
             </Badge>
           ) : null
         }
@@ -90,9 +113,9 @@ export function AnimeCharacteristics({ anime, className }: AnimeCharacteristicsP
       <CharacteristicItem
         label="Статус"
         value={
-          anime.status ? (
-            <Badge variant={anime.status === 'ongoing' ? 'default' : 'secondary'}>
-              {anime.status === 'ongoing' ? 'Онгоинг' : anime.status === 'released' ? 'Вышло' : anime.status}
+          statusTitle ? (
+            <Badge variant={status === 'ongoing' ? 'default' : 'secondary'}>
+              {status === 'ongoing' ? 'Онгоинг' : statusTitle === 'released' ? 'Вышло' : statusTitle}
             </Badge>
           ) : null
         }
@@ -101,20 +124,20 @@ export function AnimeCharacteristics({ anime, className }: AnimeCharacteristicsP
         label="Эпизоды"
         icon={<Film className="w-3.5 h-3.5" />}
         value={
-          anime.episodes ? (
+          episodesCount !== undefined && episodesCount > 0 ? (
             <span className="text-foreground">
-              {anime.episodes} эп.
-              {anime.episodes_aired && anime.episodes_aired > 0 && ` (вышло ${anime.episodes_aired})`}
+              {episodesCount} эп.
+              {episodesAired && episodesAired > 0 && episodesAired !== episodesCount && ` (вышло ${episodesAired})`}
             </span>
-          ) : anime.episodes_aired ? (
-            <span className="text-foreground">{anime.episodes_aired} эп.</span>
+          ) : episodesAired ? (
+            <span className="text-foreground">{episodesAired} эп.</span>
           ) : null
         }
       />
       <CharacteristicItem
         label="Длительность"
         icon={<Clock className="w-3.5 h-3.5" />}
-        value={anime.duration && anime.duration > 0 ? <span className="text-foreground">{anime.duration} мин.</span> : null}
+        value={duration && duration > 0 ? <span className="text-foreground">{Math.floor(duration / 60)} мин.</span> : null}
       />
       {studios.length > 0 && (
         <CharacteristicItem
