@@ -20,7 +20,7 @@ export function AnimeCard({ anime, showRating = true, userStatus, isFavorite }: 
   const validRating = rating !== null && !isNaN(rating);
   
   return (
-    <Link to={`/anime/${anime.id}`} className="group block">
+    <Link to={`/anime/${anime.url}`} className="group block">
       <div className="aspect-[3/4] relative overflow-hidden rounded-lg">
         <img
           src={getImageUrl(anime.poster)}
