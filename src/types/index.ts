@@ -48,8 +48,8 @@ export interface AnimeType {
   alias: string;
 }
 
-// Anime status structure
-export interface AnimeStatus {
+// Anime release status structure (anime catalog status, not user list status)
+export interface AnimeReleaseStatus {
   title: string;
   class?: string;
   alias: 'released' | 'ongoing' | 'announcement';
@@ -139,7 +139,7 @@ export interface AnimeViewingOrder {
   anime_id: number;
   type: AnimeType;
   anime_url: string;
-  anime_status: AnimeStatus;
+  anime_status: AnimeReleaseStatus;
   description?: string;
   poster: AnimePoster;
   user?: {
@@ -178,7 +178,7 @@ export interface AnimeMinAge {
 // Main anime catalog item from API response.data[]
 export interface AnimeCatalogItem {
   anime_id: number;
-  anime_status: AnimeStatus;
+  anime_status: AnimeReleaseStatus;
   anime_url: string;
   poster: AnimePoster;
   rating: {
