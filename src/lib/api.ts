@@ -536,7 +536,7 @@ export const userListApi = {
     api.get<UserAnimeRate>(`/anime/${animeId}/list`),
 
   addToList: (animeId: number, data: {
-    status?: string;
+    list?: number;
     episodes?: number;
     score?: number;
     text?: string;
