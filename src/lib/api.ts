@@ -314,13 +314,10 @@ api.interceptors.response.use(
   (response) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
+      // Only clear local storage, don't redirect - let the app handle it
       localStorage.removeItem('auth_token');
       localStorage.removeItem('user');
-      if (redirectCallback) {
-        redirectCallback('/login');
-      } else {
-        window.location.href = '/login';
-      }
+      // Don't do hard redirect here - the app should handle auth state properly
     }
     return Promise.reject(error);
   }
@@ -332,11 +329,40 @@ api.interceptors.response.use(
 
 export interface YummyUser {
   id: number;
-  username: string;
-  email: string;
-  avatar: string | null;
-  created?: string;
-  updated?: string;
+  nickname: string;
+  email?: string;
+  about?: string;
+  banned?: boolean;
+  ids?: {
+    shikimori?: { id: number; nickname: string };
+    vk?: number;
+    tg_nickname?: string;
+  };
+  avatars?: {
+    big?: string;
+    full?: string;
+    small?: string;
+  };
+  bdate?: number | null;
+  last_online?: number;
+  sex?: 0 | 1 | 2;
+  roles?: string[];
+  register_date?: number;
+  texts?: { color?: number; left?: string; right?: string };
+  banner?: { cropped?: string; full?: string };
+  lists_privacy?: 'public' | 'friends' | 'authed' | 'none';
+  privacy?: {
+    shiki_public?: boolean;
+    tg_public?: boolean;
+    vk_public?: boolean;
+    discord_public?: boolean;
+  };
+  notifications?: {
+    vk?: boolean;
+    telegram?: boolean;
+    count?: number;
+  };
+  messages?: { unread_count?: number };
 }
 
 export interface AuthTokens {
@@ -437,9 +463,10 @@ export const authApi = {
     }),
 
   login: (email: string, password: string) =>
-    api.post<{ user: YummyUser; tokens: AuthTokens }>('/profile/login', {
-      email,
+    api.post<{ response: { success: boolean; token: string } }>('/profile/login', {
+      login: email,  // API expects "login" field, not "email"
       password,
+      need_json: true,  // Request token in JSON response (not cookie)
     }),
 
   logout: () =>
@@ -449,7 +476,7 @@ export const authApi = {
     api.post<AuthTokens>('/profile/token'),
 
   getProfile: () =>
-    api.get<YummyUser>('/profile'),
+    api.get<{ response: YummyUser }>('/profile').then(res => res.data.response),
 };
 
 // =============================================================================
@@ -504,9 +531,6 @@ export const animeApi = {
 export const userListApi = {
   getUserLists: (userId: number) =>
     api.get<UserListResponse[]>(`/users/${userId}/lists`),
-
-  getMyLists: () =>
-    api.get<UserListResponse[]>('/profile/lists'),
 
   getAnimeList: (animeId: number) =>
     api.get<UserAnimeRate>(`/anime/${animeId}/list`),

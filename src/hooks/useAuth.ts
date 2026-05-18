@@ -7,12 +7,21 @@ export function useAuth() {
   const navigate = useNavigate();
 
   const loginMutation = useMutation({
-    mutationFn: ({ email, password }: { email: string; password: string }) =>
-      authApi.login(email, password),
-    onSuccess: (response) => {
-      const { user, tokens } = response.data;
-      setAuthToken(tokens.access_token);
+    mutationFn: async ({ login, password }: { login: string; password: string }) => {
+      const response = await authApi.login(login, password);
+      const { token } = response.data.response;
+      
+      if (!token) {
+        throw new Error('No token received');
+      }
+      
+      setAuthToken(token);
+      
+      const user = await authApi.getProfile();
       setUser(user);
+      return { user, token };
+    },
+    onSuccess: ({ user }) => {
       queryClient.setQueryData(['user'], user);
     },
   });
@@ -73,11 +82,11 @@ export function useUser() {
         return cachedUser;
       }
       
-      // Fetch from API
+      // Fetch from API - getProfile returns YummyUser directly
       try {
-        const { data } = await authApi.getProfile();
-        setUser(data);
-        return data;
+        const user = await authApi.getProfile();
+        setUser(user);
+        return user;
       } catch {
         clearAuth();
         return null;

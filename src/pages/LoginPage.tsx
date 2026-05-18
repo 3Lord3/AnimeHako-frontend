@@ -7,18 +7,18 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from '@/components/ui/label';
 
 export function LoginPage() {
-  const [email, setEmail] = useState('');
+  const [login, setLogin] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const { login, isLoggingIn } = useAuth();
+  const { login: doLogin, isLoggingIn } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     
-    login(
-      { email, password },
+    doLogin(
+      { login, password },
       {
         onSuccess: () => {
           navigate('/');
@@ -46,13 +46,13 @@ export function LoginPage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="login">Логин или email</Label>
               <Input
-                id="email"
-                type="email"
-                placeholder="example@mail.ru"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="login"
+                type="text"
+                placeholder="user123 или user@mail.ru"
+                value={login}
+                onChange={(e) => setLogin(e.target.value)}
                 required
               />
             </div>

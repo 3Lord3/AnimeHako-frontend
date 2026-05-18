@@ -61,7 +61,7 @@ describe('useAuth', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() });
 
-      result.current.login({ email: 'test@test.com', password: 'password123' });
+      result.current.login({ login: 'test@test.com', password: 'password123' });
 
       await waitFor(() => expect(result.current.isLoggingIn).toBe(false));
       expect(apiModule.authApi.login).toHaveBeenCalledWith('test@test.com', 'password123');
@@ -73,7 +73,7 @@ describe('useAuth', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() });
 
-      result.current.login({ email: 'test@test.com', password: 'password123' });
+      result.current.login({ login: 'test@test.com', password: 'password123' });
 
       await waitFor(() => expect(result.current.isLoggingIn).toBe(false));
       expect(storage['token']).toBe('test-token');
@@ -85,7 +85,7 @@ describe('useAuth', () => {
 
       const { result } = renderHook(() => useAuth(), { wrapper: createWrapper() });
 
-      result.current.login({ email: 'test@test.com', password: 'wrong' });
+      result.current.login({ login: 'test@test.com', password: 'wrong' });
 
       await waitFor(() => expect(result.current.loginError).toBeDefined());
     });

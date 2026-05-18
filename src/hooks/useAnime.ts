@@ -218,7 +218,7 @@ export function useUserAnimeList(status?: AnimeStatus, favorites?: boolean) {
       if (!user) return [];
       
       try {
-        const { data } = await userListApi.getMyLists();
+        const { data } = await userListApi.getUserLists(user.id);
         let result = data.flatMap((list: { anime: unknown[] }) => list.anime);
         
         // Filter by status if provided
@@ -347,7 +347,7 @@ export function useFavorites() {
       if (!user) return [];
       
       try {
-        const { data } = await userListApi.getMyLists();
+        const { data } = await userListApi.getUserLists(user.id);
         // Filter anime that have is_fav = true (YummyAnime API)
         return data.flatMap(list => list.anime).filter(rate => rate.user?.list?.is_fav === true);
       } catch (error: unknown) {
