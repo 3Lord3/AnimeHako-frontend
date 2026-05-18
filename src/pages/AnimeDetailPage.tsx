@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAnimeDetail, useAnimeReviews, useAddToList, useUserAnimeList, useToggleFavorite, useUpdateListEntry } from '@/hooks';
+import { useAnimeDetail, useAnimeReviews, useAddToList, useUserAnimeList, useToggleFavorite, useUpdateListEntry, useRemoveFromList } from '@/hooks';
 import { useUser } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -7,9 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Heart, ArrowLeft } from 'lucide-react';
 import { getImageUrl } from '@/lib/imageUrl';
 import { cn } from '@/lib/utils';
-import { STATUS_LABELS, STATUS_ICONS, ALL_STATUSES, type StatusType } from '@/types/constants';
+import { STATUS_LABELS, STATUS_ICONS } from '@/types/constants';
+import { mapStatusToListId } from '@/types';
 import { AnimeDetailPageSkeleton } from '@/components/loaders/PageSkeletons';
 import { AnimeCharacteristics } from './AnimeDetailPage/components/AnimeCharacteristics';
+import type { AnimeStatus } from '@/types';
 
 export function AnimeDetailPage() {
   const { url } = useParams<{ url: string }>();
@@ -25,28 +27,26 @@ export function AnimeDetailPage() {
   const { mutate: addToList } = useAddToList();
   const { mutate: toggleFavorite } = useToggleFavorite();
   const { mutate: updateListEntry } = useUpdateListEntry();
+  const { mutate: removeFromList } = useRemoveFromList();
 
   // Find user's rate for this anime
   // YummyAnime API: userAnimeList items have anime_id directly
   const userAnime = userAnimeList?.find((rate) => rate.anime_id === animeId);
   // YummyAnime API: is_favorite is stored in user.list.is_fav on anime object
   const isFavorite = anime?.user?.list?.is_fav || false;
-  // YummyAnime API: user status is stored in user.list.list.id
-  const userStatus = anime?.user?.list?.list?.id ?? userAnime?.list?.id ?? null;
+  // YummyAnime API: user status list ID (number: 0-5)
+  const userListId: number | null = anime?.user?.list?.list?.id ?? userAnime?.list?.id ?? null;
 
-  const handleAddToList = (status: StatusType) => {
+  const handleAddToList = (status: AnimeStatus) => {
     if (!user) {
       navigate('/login');
       return;
     }
-    // Map status string to YummyAnime API list ID
-    const statusId = status === 'watch_now' ? 0 : status === 'will' ? 1 : status === 'watched' ? 2 : status === 'lost' ? 3 : 5;
-    // If already in list with the same status, clear status
-    if (userStatus === statusId) {
-      updateListEntry(
-        { animeId, data: { status: null } },
-        { onError: () => {} }
-      );
+    // Use proper mapping function from types
+    const statusId = mapStatusToListId(status);
+    // If already in list with the same status, remove from list
+    if (userListId === statusId) {
+      removeFromList(animeId, { onError: () => {} });
     } else if (userAnime) {
       // If already in list, update status instead of adding new
       updateListEntry(
@@ -69,7 +69,10 @@ export function AnimeDetailPage() {
     toggleFavorite({ animeId, isFavorite });
   };
 
-  const statusOptions: StatusType[] = ALL_STATUSES;
+  // YummyAnime API supports only 4 statuses: watching, planned, completed, dropped
+  // 'paused' (Приостановлено) does not exist in YummyAnime UI
+  // 'rewatching' and 'idle' are also not supported by the API
+  const statusOptions: AnimeStatus[] = ['watching', 'completed', 'dropped', 'planned'];
 
   if (isLoading) {
     return <AnimeDetailPageSkeleton />;
@@ -130,17 +133,17 @@ export function AnimeDetailPage() {
                 variant={isFavorite ? 'default' : 'outline'}
                 size="icon"
                 onClick={handleToggleFavorite}
-                className="cursor-pointer text-foreground hover:bg-muted"
+                className="cursor-pointer"
                 title={isFavorite ? 'В любимом' : 'В любимое'}
               >
                 <Heart className={cn(
                   'w-5 h-5',
-                  isFavorite ? 'fill-current text-white' : 'text-foreground'
+                  isFavorite ? 'fill-current text-black' : 'text-foreground'
                 )} />
               </Button>
               {statusOptions.map((status) => {
-                  const statusId = status === 'watch_now' ? 0 : status === 'will' ? 1 : status === 'watched' ? 2 : status === 'lost' ? 3 : 5;
-                  const isActive = userStatus === statusId;
+                  const statusId = mapStatusToListId(status);
+                  const isActive = userListId === statusId;
                   return (
                   <Button
                     key={status}
@@ -150,7 +153,7 @@ export function AnimeDetailPage() {
                     className="cursor-pointer"
                     title={STATUS_LABELS[status]}
                   >
-                    <span className={isActive ? 'text-white' : 'text-foreground'}>
+                    <span className={isActive ? 'text-black' : 'text-foreground'}>
                       {STATUS_ICONS[status]}
                     </span>
                   </Button>
