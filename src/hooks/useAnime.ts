@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { animeApi, userListApi, reviewsApi } from '@/lib/api';
 import { useUser } from './useAuth';
 import type { UserAnimeUpdate, AnimeStatus } from '@/types';
+import { mapStatusToListId } from '@/types';
 
 // =============================================================================
 // ANIME LIST / CATALOG
@@ -278,12 +279,13 @@ export function useAddToList() {
   return useMutation({
     mutationFn: (data: { animeId: number; status: AnimeStatus; episodes?: number; score?: number; text?: string }) =>
       userListApi.addToList(data.animeId, {
-        status: data.status,
+        list: mapStatusToListId(data.status),
         episodes: data.episodes,
         score: data.score,
         text: data.text,
       }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['anime', 'detail'] });
       queryClient.invalidateQueries({ queryKey: ['user', 'anime'] });
     },
   });
@@ -295,12 +297,13 @@ export function useUpdateListEntry() {
   return useMutation({
     mutationFn: ({ animeId, data }: { animeId: number; data: UserAnimeUpdate }) =>
       userListApi.addToList(animeId, {
-        status: data.status || undefined,
+        list: data.status ? mapStatusToListId(data.status) : undefined,
         episodes: data.episodes,
         score: data.score,
         text: data.text,
       }),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['anime', 'detail'] });
       queryClient.invalidateQueries({ queryKey: ['user', 'anime'] });
     },
   });
@@ -312,6 +315,7 @@ export function useRemoveFromList() {
   return useMutation({
     mutationFn: (animeId: number) => userListApi.removeFromList(animeId),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['anime', 'detail'] });
       queryClient.invalidateQueries({ queryKey: ['user', 'anime'] });
     },
   });
@@ -329,6 +333,7 @@ export function useToggleFavorite() {
       }
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['anime', 'detail'] });
       queryClient.invalidateQueries({ queryKey: ['user', 'anime'] });
     },
   });
