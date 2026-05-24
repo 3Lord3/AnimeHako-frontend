@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Star, Calendar, CalendarClock, Clock, Film, X, Loader2, Info, Home, ExternalLink } from 'lucide-react';
-import { getImageUrl } from '@/lib/imageUrl';
+import { getImageUrl, getPosterUrl } from '@/lib/imageUrl';
 import { cn } from '@/lib/utils';
 import type { AnimeDetail } from '@/types';
 
@@ -117,8 +117,8 @@ function SwipeCard({ anime, onSwipe, isActive }: SwipeCardProps) {
       <div className="relative bg-muted aspect-[2/3]">
         {anime.poster ? (
           <img
-            src={getImageUrl(anime.poster)}
-            alt={anime.russian || anime.name}
+            src={getImageUrl(getPosterUrl(anime))}
+            alt={anime.title}
             className="w-full h-full object-cover"
           />
         ) : (
@@ -146,31 +146,28 @@ function SwipeCard({ anime, onSwipe, isActive }: SwipeCardProps) {
         )}
         
         {/* Genres in top-left corner - larger */}
-        {anime.genre && anime.genre.length > 0 && (
+        {anime.genres && anime.genres.length > 0 && (
           <div className="absolute top-3 left-3 right-3 flex flex-wrap gap-2 z-10">
-            {anime.genre.slice(0, 3).map((genre) => (
-              <Badge 
-                key={genre.id} 
-                variant="secondary" 
+            {anime.genres.slice(0, 3).map((genre) => (
+              <Badge
+                key={genre.id}
+                variant="secondary"
                 className="text-sm px-2 py-1 bg-black/60 backdrop-blur-sm text-white border-0 font-medium"
               >
-                {genre.russian || genre.name}
+                {genre.title}
               </Badge>
             ))}
           </div>
         )}
-        
+
         {/* Title and rating at bottom */}
         <div className="absolute bottom-0 left-0 right-0 p-4 text-white select-text">
-          <h2 className="text-2xl font-bold mb-1">{anime.russian || anime.name}</h2>
-          {anime.name !== anime.russian && anime.name && (
-            <p className="text-sm text-gray-200 mb-3">{anime.name}</p>
-          )}
+          <h2 className="text-2xl font-bold mb-1">{anime.title}</h2>
           <div className="flex items-center gap-4 text-sm">
-            {anime.rating && (
+            {anime.rating?.average && (
               <div className="flex items-center gap-1">
                 <Star className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                <span className="font-medium">{Number(anime.rating).toFixed(1)}</span>
+                <span className="font-medium">{anime.rating.average.toFixed(1)}</span>
               </div>
             )}
             {anime.year && (
@@ -179,10 +176,10 @@ function SwipeCard({ anime, onSwipe, isActive }: SwipeCardProps) {
                 <span>{anime.year}</span>
               </div>
             )}
-            {anime.episodes && (
+            {anime.episodes?.count && (
               <div className="flex items-center gap-1">
                 <Clock className="w-4 h-4" />
-                <span>{anime.episodes} эп.</span>
+                <span>{anime.episodes.count} эп.</span>
               </div>
             )}
           </div>
@@ -218,7 +215,7 @@ export function AnimeMatcherPage() {
     
     if (direction === 'right' && currentAnime) {
       addToList(
-        { animeId: currentAnime.id, status: 'planned' },
+        { animeId: currentAnime.anime_id, status: 'planned' },
         {
           onSuccess: () => {
             loadNextAnime();
@@ -308,7 +305,7 @@ export function AnimeMatcherPage() {
         <div className="w-[360px]">
           {currentAnime && (
             <SwipeCard
-              key={currentAnime.id}
+              key={currentAnime.anime_id}
               anime={currentAnime}
               onSwipe={handleSwipe}
               isActive={!isTransitioning}
@@ -336,7 +333,7 @@ export function AnimeMatcherPage() {
             variant="outline"
             size="lg"
             className="h-14 w-14 rounded-full border-2 border-muted-foreground/30 hover:bg-muted"
-            onClick={() => currentAnime && navigate(`/anime/${currentAnime.id}`)}
+            onClick={() => currentAnime && navigate(`/anime/${currentAnime.anime_url}`)}
             title="Открыть страницу аниме"
           >
             <ExternalLink className="w-6 h-6" />
@@ -350,7 +347,7 @@ export function AnimeMatcherPage() {
         <div className="relative flex-grow flex items-center justify-center">
           {currentAnime && (
             <SwipeCard
-              key={currentAnime.id}
+              key={currentAnime.anime_id}
               anime={currentAnime}
               onSwipe={handleSwipe}
               isActive={!isTransitioning}
@@ -405,7 +402,7 @@ export function AnimeMatcherPage() {
               variant="outline"
               size="lg"
               className="h-14 w-14 rounded-full border-2 border-muted-foreground/30 hover:bg-muted"
-              onClick={() => currentAnime && navigate(`/anime/${currentAnime.id}`)}
+              onClick={() => currentAnime && navigate(`/anime/${currentAnime.anime_url}`)}
               title="Страница аниме"
             >
               <ExternalLink className="w-6 h-6" />
@@ -436,15 +433,15 @@ export function AnimeMatcherPage() {
             ) : (
               <p className="text-sm text-muted-foreground">Описание отсутствует</p>
             )}
-            
+
             {/* Genres */}
-            {currentAnime?.genre && currentAnime.genre.length > 0 && (
+            {currentAnime?.genres && currentAnime.genres.length > 0 && (
               <div className="space-y-2 mt-4">
                 <h4 className="text-sm font-medium">Жанры</h4>
                 <div className="flex flex-wrap gap-1.5">
-                  {currentAnime.genre.map((g) => (
+                  {currentAnime.genres.map((g) => (
                     <Badge key={g.id} variant="outline" className="text-xs">
-                      {g.russian || g.name}
+                      {g.title}
                     </Badge>
                   ))}
                 </div>
@@ -458,7 +455,7 @@ export function AnimeMatcherPage() {
       <Dialog open={showDescriptionModal} onOpenChange={setShowDescriptionModal}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{currentAnime?.russian || currentAnime?.name}</DialogTitle>
+            <DialogTitle>{currentAnime?.title}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             {currentAnime?.description && (
@@ -466,13 +463,13 @@ export function AnimeMatcherPage() {
                 {currentAnime.description}
               </p>
             )}
-            {currentAnime?.genre && currentAnime.genre.length > 0 && (
+            {currentAnime?.genres && currentAnime.genres.length > 0 && (
               <div className="space-y-2">
                 <h4 className="text-sm font-medium">Жанры</h4>
                 <div className="flex flex-wrap gap-1.5">
-                  {currentAnime.genre.map((g) => (
+                  {currentAnime.genres.map((g) => (
                     <Badge key={g.id} variant="outline" className="text-xs">
-                      {g.russian || g.name}
+                      {g.title}
                     </Badge>
                   ))}
                 </div>
