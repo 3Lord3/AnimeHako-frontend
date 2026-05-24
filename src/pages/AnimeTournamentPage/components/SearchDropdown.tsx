@@ -136,7 +136,7 @@ export function SearchDropdown({
                       {anime.title}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {anime.year || '—'} • {anime.genres?.slice(0, 2).join(', ') || '—'}
+                      {anime.year || '—'} • {anime.genres?.slice(0, 2).map((g) => g.title).join(', ') || '—'}
                     </p>
                   </div>
                   <Plus className="w-4 h-4 text-muted-foreground flex-shrink-0" />

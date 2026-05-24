@@ -35,19 +35,30 @@ interface PosterSizes {
 
 export function getPosterUrl(anime: { poster?: PosterSizes | string | null; cover?: string | null }): string {
   const poster = anime.poster;
-  
+
   // Handle case where poster is an object with size variants
   if (poster && typeof poster === 'object') {
     const sizes = poster as PosterSizes;
-    return getImageUrl(sizes.medium || sizes.big || sizes.huge || sizes.small || sizes.fullsize || sizes.mega, '/placeholder-anime.png');
+    return getImageUrl(sizes.mega || sizes.huge || sizes.fullsize || sizes.big || sizes.medium || sizes.small, '/placeholder-anime.png');
   }
-  
+
   // Handle case where poster is a string
   return getImageUrl(poster || anime.cover, '/placeholder-anime.png');
 }
 
 export function getCoverUrl(anime: { cover?: string | null; poster?: string | null }): string {
   return getImageUrl(anime.cover || anime.poster, '/placeholder-anime.png');
+}
+
+export function getHeroPosterUrl(anime: { poster?: PosterSizes | string | null }, fallback = '/placeholder-anime.png'): string {
+  const poster = anime.poster;
+
+  if (poster && typeof poster === 'object') {
+    const sizes = poster as PosterSizes;
+    return getImageUrl(sizes.mega || sizes.huge || sizes.fullsize || sizes.big || fallback);
+  }
+
+  return fallback;
 }
 
 export function getScreenshotUrl(screenshot: string): string {

@@ -1,11 +1,11 @@
 import { Star, Calendar, Clock, Film } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import type { AnimeListItem } from '@/types';
-import { getImageUrl } from '@/lib/imageUrl';
+import type { AnimeCatalogItem } from '@/types';
+import { getImageUrl, getHeroPosterUrl } from '@/lib/imageUrl';
 import { cn } from '@/lib/utils';
 
 interface TournamentCardProps {
-  anime: AnimeListItem;
+  anime: AnimeCatalogItem;
   isWinner?: boolean;
   isEliminated?: boolean;
   onClick?: () => void;
@@ -14,16 +14,17 @@ interface TournamentCardProps {
   className?: string;
 }
 
-export function TournamentCard({ 
-  anime, 
-  isWinner = false, 
-  isEliminated = false, 
+export function TournamentCard({
+  anime,
+  isWinner = false,
+  isEliminated = false,
   onClick,
   showDetails = true,
   compact = false,
   className = ''
 }: TournamentCardProps) {
-  const rating = anime.rating ? (typeof anime.rating === 'number' ? anime.rating : Number(anime.rating)) : null;
+  const posterUrl = getHeroPosterUrl(anime);
+  const rating = anime.rating?.average ? Number(anime.rating.average) : null;
   const validRating = rating !== null && !isNaN(rating);
 
   return (
@@ -39,9 +40,9 @@ export function TournamentCard({
       )}
     >
       <div className={cn("relative w-full h-full", compact ? "h-full" : "aspect-[2/3]")}>
-        {anime.poster ? (
+        {posterUrl ? (
           <img
-            src={getImageUrl(anime.poster)}
+            src={getImageUrl(posterUrl)}
             alt={anime.title}
             className="w-full h-full object-cover"
           />
@@ -67,18 +68,18 @@ export function TournamentCard({
         )}
         
         {/* Genres in top-right corner */}
-        {showDetails && 'genre' in anime && anime.genre && anime.genre.length > 0 && (
+        {showDetails && anime.genres && anime.genres.length > 0 && (
           <div className="absolute top-3 right-3 sm:top-4 sm:right-4 flex flex-wrap gap-1 z-10 max-w-[60%] justify-end">
-            {anime.genre.slice(0, compact ? 2 : 2).map((g: { id: number; name: string; russian: string | null }) => (
-              <Badge 
-                key={g.id} 
-                variant="secondary" 
+            {anime.genres.slice(0, 2).map((g) => (
+              <Badge
+                key={g.id}
+                variant="secondary"
                 className={cn(
                   "text-muted-foreground border-0",
                   compact ? "text-xs sm:text-sm px-2 py-1 bg-black/60" : "text-xs px-2 py-0.5 bg-black/60"
                 )}
               >
-                {g.russian || g.name}
+                {g.title}
               </Badge>
             ))}
           </div>
@@ -89,11 +90,8 @@ export function TournamentCard({
           <h3 className={cn(
             "font-bold line-clamp-2",
             compact ? "text-sm sm:text-base md:text-lg" : "text-lg mb-1"
-          )}>{anime.russian || anime.name}</h3>
-          {anime.name !== anime.russian && anime.name && (
-            <p className={cn("text-gray-200 line-clamp-1", compact ? "text-xs sm:text-sm" : "text-xs mb-2")}>{anime.name}</p>
-          )}
-          
+          )}>{anime.title}</h3>
+
           {showDetails && (
             <div className={cn("flex items-center gap-2 sm:gap-3", compact ? "text-xs sm:text-sm md:text-base" : "text-sm")}>
               {validRating && (
@@ -108,17 +106,17 @@ export function TournamentCard({
                   <span>{anime.year}</span>
                 </div>
               )}
-              {anime.episodes && (
+              {anime.episodes?.count && (
                 <div className="flex items-center gap-0.5 sm:gap-1">
                   <Clock className={compact ? "w-3 h-3 sm:w-4 sm:h-4" : "w-4 h-4"} />
-                  <span>{anime.episodes} эп.</span>
+                  <span>{anime.episodes.count} эп.</span>
                 </div>
               )}
             </div>
           )}
         </div>
       </div>
-      
+
       {/* Click indicator */}
       {onClick && !isEliminated && (
         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100">

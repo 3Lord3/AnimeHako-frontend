@@ -1,6 +1,6 @@
 import type { TournamentParticipant } from '@/hooks/useTournament';
 import { cn } from '@/lib/utils';
-import { getImageUrl } from '@/lib/imageUrl';
+import { getImageUrl, getHeroPosterUrl } from '@/lib/imageUrl';
 
 interface PairSlotProps {
   participant: TournamentParticipant | null;
@@ -15,6 +15,8 @@ export function PairSlot({ participant, isWinner, isBye }: PairSlotProps) {
     );
   }
 
+  const posterUrl = getHeroPosterUrl(participant.anime);
+
   return (
     <div
       className={cn(
@@ -23,13 +25,11 @@ export function PairSlot({ participant, isWinner, isBye }: PairSlotProps) {
       )}
     >
       <div className="w-4 h-5 sm:w-5 sm:h-6 rounded overflow-hidden bg-muted flex-shrink-0">
-        {participant.anime.poster && (
-          <img
-            src={getImageUrl(participant.anime.poster)}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        )}
+        <img
+          src={getImageUrl(posterUrl)}
+          alt=""
+          className="w-full h-full object-cover"
+        />
       </div>
       <span className="text-[10px] sm:text-xs font-medium truncate flex-1 text-foreground">
         {participant.anime.title}

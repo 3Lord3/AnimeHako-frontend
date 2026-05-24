@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import type { TournamentParticipant } from '@/hooks/useTournament';
 import { cn } from '@/lib/utils';
-import { getImageUrl } from '@/lib/imageUrl';
+import { getImageUrl, getHeroPosterUrl } from '@/lib/imageUrl';
 
 interface TournamentResultsProps {
   participants: Array<TournamentParticipant & { position: number }>;
@@ -13,7 +13,7 @@ interface TournamentResultsProps {
 
 export function TournamentResults({ participants, champion, onRestart }: TournamentResultsProps) {
   const sortedResults = [...participants].sort((a, b) => a.position - b.position);
-  
+
   return (
     <div className="space-y-8 py-8">
       {/* Champion highlight */}
@@ -25,7 +25,7 @@ export function TournamentResults({ participants, champion, onRestart }: Tournam
               <div className="absolute inset-2 sm:inset-3 md:inset-4 bg-background rounded-full" />
               <div className="absolute inset-3 sm:inset-4 md:inset-6 overflow-hidden rounded-full">
                 <img
-                  src={champion.anime.poster ? getImageUrl(champion.anime.poster) : ''}
+                  src={getImageUrl(getHeroPosterUrl(champion.anime))}
                   alt={champion.anime.title}
                   className="w-full h-full object-cover"
                 />
@@ -35,13 +35,10 @@ export function TournamentResults({ participants, champion, onRestart }: Tournam
               </div>
             </div>
             <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-foreground">{champion.anime.title}</h2>
-            {champion.anime.title_en && (
-              <p className="text-xs sm:text-sm text-muted-foreground">{champion.anime.title_en}</p>
-            )}
           </div>
         </div>
       )}
-      
+
       {/* Results table */}
       <div className="max-w-xs sm:max-w-sm md:max-w-2xl mx-auto">
         <h3 className="text-base sm:text-xl font-bold mb-3 sm:mb-4 text-center text-foreground">Итоговая таблица</h3>
@@ -51,8 +48,8 @@ export function TournamentResults({ participants, champion, onRestart }: Tournam
               key={participant.id}
               className={cn(
                 "flex items-center gap-2 sm:gap-4 p-2 sm:p-3 rounded-lg transition-colors border",
-                participant.position <= 3 
-                  ? "bg-gradient-to-r from-yellow-500/10 via-orange-500/10 to-transparent border-yellow-500/20" 
+                participant.position <= 3
+                  ? "bg-gradient-to-r from-yellow-500/10 via-orange-500/10 to-transparent border-yellow-500/20"
                   : "bg-card border-border"
               )}
             >
@@ -70,31 +67,25 @@ export function TournamentResults({ participants, champion, onRestart }: Tournam
                   participant.position
                 )}
               </div>
-              
+
               {/* Card preview */}
               <div className="w-10 h-12 sm:w-12 sm:h-16 md:w-16 md:h-20 rounded overflow-hidden bg-muted flex-shrink-0 border border-border">
-                {participant.anime.poster ? (
-                  <img
-                    src={participant.anime.poster}
-                    alt={participant.anime.title}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center text-[10px] sm:text-xs text-muted-foreground">
-                    Нет
-                  </div>
-                )}
+                <img
+                  src={getImageUrl(getHeroPosterUrl(participant.anime))}
+                  alt={participant.anime.title}
+                  className="w-full h-full object-cover"
+                />
               </div>
-              
+
               {/* Info */}
               <div className="flex-1 min-w-0">
                 <p className="font-semibold truncate text-foreground text-xs sm:text-sm">{participant.anime.title}</p>
                 <p className="text-[10px] sm:text-xs text-muted-foreground truncate">
                   {participant.anime.year && `${participant.anime.year} • `}
-                  {participant.anime.genres?.slice(0, 2).join(', ')}
+                  {participant.anime.genres?.slice(0, 2).map((g) => g.title).join(', ')}
                 </p>
               </div>
-              
+
               {/* Rating */}
               {participant.anime.rating && (
                 <div className="text-xs sm:text-sm font-medium text-muted-foreground">
@@ -105,7 +96,7 @@ export function TournamentResults({ participants, champion, onRestart }: Tournam
           ))}
         </div>
       </div>
-      
+
       {/* Action buttons */}
       <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
         <Button onClick={onRestart} size="lg" variant="outline" className="gap-2 text-foreground border-2 hover:bg-accent text-sm sm:text-base px-4 py-3 sm:px-8 sm:py-6 w-full sm:w-auto">
