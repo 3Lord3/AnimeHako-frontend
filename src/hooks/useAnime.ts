@@ -152,10 +152,7 @@ export function useRandomAnime() {
     queryFn: async () => {
       const randomAnime = await animeApi.getRandom();
       if (!randomAnime) return null;
-      
-      // Fetch full details for the random anime
-      const { data } = await animeApi.getById(randomAnime.id);
-      return data;
+      return randomAnime;
     },
     retry: false,
     refetchOnWindowFocus: false,

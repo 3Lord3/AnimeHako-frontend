@@ -531,9 +531,28 @@ export const animeApi = {
     api.get<{ response: YummyAnimeDetailResponse }>(`/anime/${url}`)
       .then(res => res.data.response),
 
-  getRandom: () =>
-    api.get<AnimeCatalogItem[]>('/anime', { params: { limit: 1, order: 'random' } })
-      .then(res => res.data[0] || null),
+  getRandom: (excludeLists: string[] = ['0', '1', '2', '3', '4', '5']) =>
+    api.get<{ response: any }>('/anime', {
+      params: {
+        sort: 'random',
+        limit: 1,
+        exclude_list: excludeLists
+      }
+    }).then(res => {
+      if (res.status === 204 || !res.data) return null;
+
+      let items = res.data.response;
+
+      if (items && typeof items === 'object' && !Array.isArray(items)) {
+        const keys = Object.keys(items);
+        if (keys.length > 0 && keys.every(k => !isNaN(Number(k)))) {
+          items = Object.values(items);
+        }
+      }
+
+      const firstItem = Array.isArray(items) ? items[0] : items;
+      return firstItem || null;
+    }).catch(() => null),
 
   getGenres: () =>
     api.get<GenreResponse[]>('/anime/genres'),
