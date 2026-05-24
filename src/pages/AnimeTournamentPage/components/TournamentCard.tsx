@@ -1,4 +1,4 @@
-import { Star, Calendar, Clock, Film } from 'lucide-react';
+import { Star, Calendar, Film } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { AnimeCatalogItem } from '@/types';
 import { getImageUrl, getHeroPosterUrl } from '@/lib/imageUrl';
@@ -104,12 +104,6 @@ export function TournamentCard({
                 <div className="flex items-center gap-0.5 sm:gap-1">
                   <Calendar className={compact ? "w-3 h-3 sm:w-4 sm:h-4" : "w-4 h-4"} />
                   <span>{anime.year}</span>
-                </div>
-              )}
-              {anime.episodes?.count && (
-                <div className="flex items-center gap-0.5 sm:gap-1">
-                  <Clock className={compact ? "w-3 h-3 sm:w-4 sm:h-4" : "w-4 h-4"} />
-                  <span>{anime.episodes.count} эп.</span>
                 </div>
               )}
             </div>
