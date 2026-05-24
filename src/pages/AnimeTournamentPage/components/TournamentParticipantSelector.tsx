@@ -5,7 +5,7 @@ import { useAnimeList } from '@/hooks';
 import { useDebounce } from '@/hooks/useDebounce';
 import type { YummyUserAnimeRate } from '@/types';
 import { cn } from '@/lib/utils';
-import { getImageUrl } from '@/lib/imageUrl';
+import { getPosterUrl } from '@/lib/imageUrl';
 
 interface TournamentParticipantSelectorProps {
   completedAnime: YummyUserAnimeRate[];
@@ -127,7 +127,7 @@ export function TournamentParticipantSelector({
                       )}
                     >
                       <img
-                        src={getImageUrl(anime.poster?.medium || anime.poster?.small)}
+                        src={getPosterUrl(anime)}
                         alt={anime.title}
                         className="w-8 h-11 sm:w-10 sm:h-14 object-cover rounded flex-shrink-0"
                       />
@@ -195,7 +195,7 @@ export function TournamentParticipantSelector({
               className="relative group aspect-[2/3] rounded-lg overflow-hidden cursor-pointer"
             >
               <img
-                src={getImageUrl(anime.poster?.medium || anime.poster?.small)}
+                src={getPosterUrl(anime)}
                 alt={anime.title}
                 className="object-cover w-full h-full transition-all duration-200 group-hover:brightness-50"
               />
