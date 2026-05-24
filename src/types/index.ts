@@ -239,10 +239,77 @@ export type AnimeDetail = AnimeDetailResponse;
 // =============================================================================
 
 // YummyAnime list IDs: 0=watch_now, 1=will, 2=watched, 3=lost, 5=postpone
-export type YummyAnimeListId = 0 | 1 | 2 | 3 | 5;
+export type YummyAnimeListId = 0 | 1 | 2 | 3 | 4 | 5;
 
-export type AnimeStatus = 'watching' | 'completed' | 'dropped' | 'planned' | 'rewatching' | 'paused' | 'idle';
+export type AnimeStatus = 'watching' | 'completed' | 'dropped' | 'planned' | 'paused' | 'favourite';
 
+// =============================================================================
+// YUMMYANIME API USER LIST TYPES
+// =============================================================================
+
+// YummyAnime API User List Response (GET /users/{id}/lists/{list_id})
+// Each item in the array represents one anime in user's list
+export interface YummyUserAnimeRate {
+  rating_counters?: number;
+  season?: number;
+  top?: {
+    global: number;
+    category: number;
+  };
+  views?: number;
+  anime_id: number;
+  anime_status?: {
+    title: string;
+    alias: string;
+    value: number;
+  };
+  anime_url: string;
+  date: number;
+  genres?: Array<{
+    title: string;
+    id: number;
+    alias: string;
+    url: string;
+  }>;
+  poster: {
+    small: string;
+    medium: string;
+    big: string;
+    huge: string;
+    fullsize: string;
+    mega: string;
+  };
+  rating: number;
+  title: string;
+  type: {
+    name: string;
+    value: number;
+    shortname: string;
+    alias: string;
+  };
+  user?: {
+    list?: {
+      is_fav: boolean;
+      list?: {
+        title: string;
+        href: string;
+        id: 0 | 1 | 2 | 3 | 5;
+      };
+    };
+    rating?: number;
+  };
+  year?: number;
+  remote_ids?: {
+    worldart_id?: number;
+    shikimori_id?: number;
+    myanimelist_id?: number;
+    sr_id?: number;
+    kp_id?: number;
+    worldart_type?: string;
+  };
+}
+
+// Legacy type for backward compatibility (old API)
 export interface UserAnimeRate {
   id: number;
   user_id: number;
@@ -392,12 +459,11 @@ export const YUMMY_LIST_IDS = {
 // API status values (from YummyAnime)
 export const API_STATUS_VALUES = {
   watching: 'watching',
-  rewatching: 'rewatching',
   completed: 'completed',
   paused: 'paused',
   dropped: 'dropped',
   planned: 'planned',
-  idle: 'idle',
+  favourite: 'favourite',
 } as const;
 
 // Map internal status to API status
@@ -409,12 +475,11 @@ export const mapStatusToApi = (status: AnimeStatus): string => {
 export const mapStatusFromApi = (apiStatus: string): AnimeStatus => {
   const statusMap: Record<string, AnimeStatus> = {
     watching: 'watching',
-    rewatching: 'rewatching',
     completed: 'completed',
     paused: 'paused',
     dropped: 'dropped',
     planned: 'planned',
-    idle: 'idle',
+    favourite: 'favourite',
   };
   return statusMap[apiStatus] || 'planned';
 };
@@ -426,6 +491,7 @@ export function mapListIdToStatus(listId: number | undefined): AnimeStatus {
     case 1: return 'planned';
     case 2: return 'completed';
     case 3: return 'dropped';
+    case 4: return 'favourite';
     case 5: return 'paused';
     default: return 'planned';
   }
@@ -438,6 +504,7 @@ export function mapStatusToListId(status: AnimeStatus): YummyAnimeListId {
     case 'planned': return 1;
     case 'completed': return 2;
     case 'dropped': return 3;
+    case 'favourite': return 4;
     case 'paused': return 5;
     default: return 1;
   }

@@ -1,39 +1,44 @@
-import { Eye, CheckCircle, XCircle, CalendarClock, Heart, RotateCcw, Pause } from 'lucide-react';
+import { Eye, CheckCircle, XCircle, CalendarClock, Heart, Pause, Star } from 'lucide-react';
 import type { AnimeStatus } from '@/types';
 
 export type StatusType = AnimeStatus;
 
+// YummyAnime API lists: watch_now=0, will=1, watched=2, lost=3, favourite=4, postpone=5
 export const STATUS_ICONS: Record<StatusType, React.ReactNode> = {
   watching: <Eye size={24} strokeWidth={2.5} />,
-  rewatching: <RotateCcw size={24} strokeWidth={2.5} />,
   completed: <CheckCircle size={24} strokeWidth={2.5} />,
   paused: <Pause size={24} strokeWidth={2.5} />,
   dropped: <XCircle size={24} strokeWidth={2.5} />,
   planned: <CalendarClock size={24} strokeWidth={2.5} />,
-  idle: <CalendarClock size={24} strokeWidth={2.5} />,
+  favourite: <Star size={24} strokeWidth={2.5} />,
 };
 
 export const STATUS_COLORS: Record<StatusType, string> = {
   watching: 'bg-blue-500 text-white',
-  rewatching: 'bg-purple-500 text-white',
   completed: 'bg-green-500 text-white',
   paused: 'bg-yellow-500 text-white',
   dropped: 'bg-red-500 text-white',
   planned: 'bg-yellow-600 text-white',
-  idle: 'bg-gray-500 text-white',
+  favourite: 'bg-pink-500 text-white',
 };
 
 export const STATUS_LABELS: Record<StatusType, string> = {
   watching: 'Смотрю',
-  rewatching: 'Пересматриваю',
   completed: 'Просмотрено',
-  paused: 'Приостановлено',
+  paused: 'Отложено',
   dropped: 'Брошено',
-  planned: 'Запланировано',
-  idle: 'В планах',
+  planned: 'В планах',
+  favourite: 'Любимое',
 };
 
-export const ALL_STATUSES: StatusType[] = ['watching', 'rewatching', 'completed', 'paused', 'dropped', 'planned', 'idle'];
+// статусы которые есть в YummyAnime API (id списка)
+export const YUMMY_LIST_STATUSES: StatusType[] = ['watching', 'planned', 'completed', 'paused', 'dropped', 'favourite'];
+
+// OLDStatuses - статусы без соответствующего списка в YummyAnime API
+export const OLDStatuses: StatusType[] = [];
+
+// All statuses for UI display
+export const ALL_STATUSES: StatusType[] = [...YUMMY_LIST_STATUSES, ...OLDStatuses];
 
 export const FAVORITE_ICON = <Heart size={24} strokeWidth={2.5} />;
 
