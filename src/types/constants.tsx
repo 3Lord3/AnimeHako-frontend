@@ -32,7 +32,7 @@ export const STATUS_LABELS: Record<StatusType, string> = {
 };
 
 // статусы которые есть в YummyAnime API (id списка)
-export const YUMMY_LIST_STATUSES: StatusType[] = ['watching', 'planned', 'completed', 'paused', 'dropped', 'favourite'];
+export const YUMMY_LIST_STATUSES: StatusType[] = ['watching', 'planned', 'completed', 'paused', 'dropped'];
 
 // OLDStatuses - статусы без соответствующего списка в YummyAnime API
 export const OLDStatuses: StatusType[] = [];

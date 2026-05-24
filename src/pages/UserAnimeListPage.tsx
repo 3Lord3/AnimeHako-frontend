@@ -84,6 +84,13 @@ export function UserAnimeListPage() {
             {statusLabels[s]}
           </Button>
         ))}
+        <Button
+          variant={isFavorites ? 'default' : 'outline'}
+          className={isFavorites ? 'text-white' : 'text-foreground'}
+          onClick={() => setSearchParams(isFavorites ? {} : { favorites: 'true' })}
+        >
+          Любимое
+        </Button>
       </div>
 
       {isLoading ? (
