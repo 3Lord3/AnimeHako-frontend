@@ -69,10 +69,9 @@ export function AnimeDetailPage() {
     toggleFavorite({ animeId, isFavorite });
   };
 
-  // YummyAnime API supports only 4 statuses: watching, planned, completed, dropped
-  // 'paused' (Приостановлено) does not exist in YummyAnime UI
-  // 'rewatching' and 'idle' are also not supported by the API
-  const statusOptions: AnimeStatus[] = ['watching', 'completed', 'dropped', 'planned'];
+  // Статусы списков: watching, planned, completed, dropped, paused
+  // 'favourite' - это не статус списка, а флаг is_fav (отдельная кнопка Heart)
+  const statusOptions: AnimeStatus[] = ['watching', 'planned', 'completed', 'paused', 'dropped'];
 
   if (isLoading) {
     return <AnimeDetailPageSkeleton />;

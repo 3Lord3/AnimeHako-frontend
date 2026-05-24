@@ -6,6 +6,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { getImageUrl } from '@/lib/imageUrl';
 import { STATUS_ICONS, STATUS_COLORS, ALL_STATUSES, type StatusType } from '@/types/constants';
 import { UserAnimeListPageSkeleton } from '@/components/loaders/PageSkeletons';
+import type { YummyUserAnimeRate } from '@/types';
+import { mapListIdToStatus } from '@/types';
 
 export function UserAnimeListPage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -16,25 +18,36 @@ export function UserAnimeListPage() {
 
   const statusLabels: Record<string, string> = {
     watching: 'Смотрю',
-    rewatching: 'Пересматриваю',
     completed: 'Просмотрено',
-    paused: 'Приостановлено',
+    paused: 'Отложено',
     dropped: 'Брошено',
-    planned: 'Запланировано',
-    idle: 'В планах',
+    planned: 'В планах',
+  };
+
+  // Helper to get status from YummyAnime rate
+  const getRateStatus = (rate: YummyUserAnimeRate): string => {
+    const listId = rate.user?.list?.list?.id;
+    return mapListIdToStatus(listId);
+  };
+
+  // Helper to check if rate is favorite
+  const isRateFavorite = (rate: YummyUserAnimeRate): boolean => {
+    return rate.user?.list?.is_fav === true;
   };
 
   // Count by status from all lists
-  const watching = allLists?.filter((a) => a.status === 'watching').length || 0;
-  const rewatching = allLists?.filter((a) => a.status === 'rewatching').length || 0;
-  const completed = allLists?.filter((a) => a.status === 'completed').length || 0;
-  const dropped = allLists?.filter((a) => a.status === 'dropped').length || 0;
-  const favoritesCount = allLists?.filter((a) => a.text?.includes('favorite')).length || 0;
+  const watching = allLists?.filter((a: YummyUserAnimeRate) => getRateStatus(a) === 'watching').length || 0;
+  const planned = allLists?.filter((a: YummyUserAnimeRate) => getRateStatus(a) === 'planned').length || 0;
+  const completed = allLists?.filter((a: YummyUserAnimeRate) => getRateStatus(a) === 'completed').length || 0;
+  const paused = allLists?.filter((a: YummyUserAnimeRate) => getRateStatus(a) === 'paused').length || 0;
+  const dropped = allLists?.filter((a: YummyUserAnimeRate) => getRateStatus(a) === 'dropped').length || 0;
+  const favoritesCount = allLists?.filter((a: YummyUserAnimeRate) => isRateFavorite(a)).length || 0;
 
   const stats = [
     { label: 'Смотрю', count: watching },
-    { label: 'Пересматриваю', count: rewatching },
+    { label: 'В планах', count: planned },
     { label: 'Просмотрено', count: completed },
+    { label: 'Отложено', count: paused },
     { label: 'Брошено', count: dropped },
     { label: 'Любимое', count: favoritesCount },
   ];
@@ -46,7 +59,7 @@ export function UserAnimeListPage() {
   return (
     <div className="space-y-6">
       {/* Statistics */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
         {stats.map((stat) => (
           <Card key={stat.label}>
             <CardContent className="text-center">
@@ -71,13 +84,6 @@ export function UserAnimeListPage() {
             {statusLabels[s]}
           </Button>
         ))}
-        <Button
-          variant={isFavorites ? 'default' : 'outline'}
-          className={isFavorites ? 'text-white' : 'text-foreground'}
-          onClick={() => setSearchParams(isFavorites ? {} : { favorites: 'true' })}
-        >
-          Любимое
-        </Button>
       </div>
 
       {isLoading ? (
@@ -88,25 +94,27 @@ export function UserAnimeListPage() {
         </div>
       ) : (
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {displayList.map((item) => {
-            const displayTitle = item.anime.russian || item.anime.name || 'Unknown';
-            const isFavorite = item.text?.includes('favorite') || false;
+          {displayList.map((item: YummyUserAnimeRate) => {
+            const rate = item as YummyUserAnimeRate;
+            const displayTitle = rate.title || 'Unknown';
+            const isFavorite = isRateFavorite(rate);
+            const status = getRateStatus(rate);
             
             return (
-              <Link key={item.id || item.anime_id} to={`/anime/${item.anime_id}`} className="group block relative rounded-lg overflow-hidden">
+              <Link key={rate.anime_id} to={`/anime/${rate.anime_id}`} className="group block relative rounded-lg overflow-hidden">
                 <img
-                  src={getImageUrl(item.anime.poster)}
+                  src={getImageUrl(rate.poster?.medium || rate.poster?.small)}
                   alt={displayTitle}
                   className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                   loading="lazy"
                 />
                 <div className="absolute top-2 left-2 right-2 flex justify-between items-start gap-1">
                   <Badge 
-                    title={statusLabels[item.status] || item.status}
-                    className={`h-9 w-9 p-0 rounded-full cursor-pointer ${item.status ? STATUS_COLORS[item.status as StatusType] : 'bg-gray-500'}`}
+                    title={statusLabels[status] || status}
+                    className={`h-9 w-9 p-0 rounded-full cursor-pointer ${status ? STATUS_COLORS[status as StatusType] : 'bg-gray-500'}`}
                   >
                     <span className="flex items-center justify-center w-full h-full">
-                      {STATUS_ICONS[item.status as StatusType] || STATUS_ICONS.watching}
+                      {STATUS_ICONS[status as StatusType] || STATUS_ICONS.watching}
                     </span>
                   </Badge>
                   {isFavorite && (

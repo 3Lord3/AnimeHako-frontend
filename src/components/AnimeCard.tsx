@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom';
 import { Star } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import type { AnimeListItem } from '@/types';
-import { getImageUrl } from '@/lib/imageUrl';
+import { getImageUrl, getPosterUrl } from '@/lib/imageUrl';
 import { STATUS_ICONS, STATUS_COLORS, FAVORITE_ICON, getRatingColor, type StatusType } from '@/types/constants';
 
 interface AnimeCardProps {
@@ -23,7 +23,7 @@ export function AnimeCard({ anime, showRating = true, userStatus, isFavorite }: 
     <Link to={`/anime/${anime.url}`} className="group block">
       <div className="aspect-[3/4] relative overflow-hidden rounded-lg">
         <img
-          src={getImageUrl(anime.poster)}
+          src={getImageUrl(getPosterUrl(anime))}
           alt={displayTitle}
           className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
           loading="lazy"

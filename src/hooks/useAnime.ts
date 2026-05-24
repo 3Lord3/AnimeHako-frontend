@@ -219,22 +219,26 @@ export function useUserAnimeList(status?: AnimeStatus, favorites?: boolean) {
       if (!user) return [];
       
       try {
-        const { data } = await userListApi.getUserLists(user.id);
-        let result = data.flatMap((list: { anime: unknown[] }) => list.anime);
-        
-        // Filter by status if provided
+        // If status is provided, use specific list endpoint
         if (status) {
-          result = result.filter((rate: { user?: { list?: { list?: { id: number } } } }) => {
-            const listId = rate.user?.list?.list?.id;
-            return STATUS_MAPPINGS.yummyToAnimeStatus[listId] === status;
-          });
+          const listId = mapStatusToListId(status);
+          const { data } = await userListApi.getUserList(user.id, listId);
+          const rates = data.response || [];
+          return favorites 
+            ? rates.filter((rate: YummyUserAnimeRate) => rate.user?.list?.is_fav === true)
+            : rates;
         }
+        
+        // Otherwise get all lists and combine
+        const { data } = await userListApi.getUserLists(user.id);
+        const rates = data.response || [];
         
         if (favorites) {
-          result = result.filter((rate: { user?: { list?: { is_fav: boolean } } }) => rate.user?.list?.is_fav === true);
+          // Filter anime that have is_fav = true (YummyAnime API)
+          return rates.filter((rate: YummyUserAnimeRate) => rate.user?.list?.is_fav === true);
         }
         
-        return result;
+        return rates;
       } catch (error: unknown) {
         // Return empty array on auth errors to prevent redirect on public pages
         if (error && typeof error === 'object' && 'response' in error) {
@@ -352,9 +356,9 @@ export function useFavorites() {
       if (!user) return [];
       
       try {
+        // Get all lists and filter favorites
         const { data } = await userListApi.getUserLists(user.id);
-        // Filter anime that have is_fav = true (YummyAnime API)
-        return data.flatMap(list => list.anime).filter(rate => rate.user?.list?.is_fav === true);
+        return data.filter((rate: YummyUserAnimeRate) => rate.user?.list?.is_fav === true);
       } catch (error: unknown) {
         if (error && typeof error === 'object' && 'response' in error) {
           const err = error as { response?: { status?: number } };
