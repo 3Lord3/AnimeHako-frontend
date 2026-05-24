@@ -23,8 +23,27 @@ export function getImageUrl(url: string | null | undefined, fallback?: string): 
   return url;
 }
 
-export function getPosterUrl(anime: { poster?: string | null; cover?: string | null }): string {
-  return getImageUrl(anime.poster || anime.cover, '/placeholder-anime.png');
+// YummyAnime API returns poster as an object with different sizes
+interface PosterSizes {
+  small?: string;
+  medium?: string;
+  big?: string;
+  huge?: string;
+  fullsize?: string;
+  mega?: string;
+}
+
+export function getPosterUrl(anime: { poster?: PosterSizes | string | null; cover?: string | null }): string {
+  const poster = anime.poster;
+  
+  // Handle case where poster is an object with size variants
+  if (poster && typeof poster === 'object') {
+    const sizes = poster as PosterSizes;
+    return getImageUrl(sizes.medium || sizes.big || sizes.huge || sizes.small || sizes.fullsize || sizes.mega, '/placeholder-anime.png');
+  }
+  
+  // Handle case where poster is a string
+  return getImageUrl(poster || anime.cover, '/placeholder-anime.png');
 }
 
 export function getCoverUrl(anime: { cover?: string | null; poster?: string | null }): string {

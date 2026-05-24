@@ -233,7 +233,8 @@ export interface YummyAnimeReviewsResponse {
   can_add: boolean;
 }
 
-// YummyAnime API User List Response (GET /users/{id}/lists)
+// YummyAnime API User List Response (GET /users/{id}/lists/{list_id})
+// Each item in the array represents one anime in user's list
 export interface YummyUserAnimeRate {
   rating_counters?: number;
   season?: number;
@@ -292,6 +293,20 @@ export interface YummyUserAnimeRate {
     kp_id?: number;
     worldart_type?: string;
   };
+}
+
+// Legacy type for backward compatibility (old API)
+export interface UserAnimeRate {
+  id: number;
+  user_id: number;
+  anime_id: number;
+  anime: AnimeCatalogItem;
+  text: string | null;
+  episodes: number;
+  status: string;
+  score: number | null;
+  created_at: string;
+  updated_at: string;
 }
 
 // Request interceptor: Add Authorization header with Bearer token
@@ -529,11 +544,17 @@ export const animeApi = {
 // =============================================================================
 
 export const userListApi = {
-  getUserLists: (userId: number) =>
-    api.get<UserListResponse[]>(`/users/${userId}/lists`),
+  // Get all anime from user's lists combined - uses /users/{id}/lists/{list_id}
+  getUserList: (userId: number, listId: YummyAnimeListId) =>
+    api.get<YummyUserAnimeRate[]>(`/users/${userId}/lists/${listId}`),
 
+  // Get all lists for user - uses /users/{id}/lists
+  getUserLists: (userId: number) =>
+    api.get<YummyUserAnimeRate[]>(`/users/${userId}/lists`),
+
+  // Get anime status in user's list - uses /anime/{animeId}/list
   getAnimeList: (animeId: number) =>
-    api.get<UserAnimeRate>(`/anime/${animeId}/list`),
+    api.get<{ list: number; is_favorite: boolean }>(`/anime/${animeId}/list`),
 
   addToList: (animeId: number, data: {
     list?: number;
