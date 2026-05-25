@@ -119,6 +119,100 @@ export function useAnimeList(params?: {
 }
 
 // =============================================================================
+// ANIME SEARCH
+// =============================================================================
+
+export function useAnimeSearch(query: string, limit: number = 30) {
+  return useQuery({
+    queryKey: ['anime', 'search', query, limit],
+    queryFn: async () => {
+      if (!query.trim()) return [];
+      const response = await animeApi.search(query, limit);
+
+      let animeArray: any[] = [];
+
+      // Handle object response with 'response' key (YummyAnime API format)
+      if (response && typeof response === 'object' && !Array.isArray(response)) {
+        if ('response' in response && Array.isArray((response as any).response)) {
+          animeArray = (response as any).response;
+        } else {
+          const keys = Object.keys(response);
+          if (keys.length > 0 && keys.every(k => !isNaN(Number(k)))) {
+            animeArray = Object.values(response);
+          }
+        }
+      } else if (Array.isArray(response)) {
+        animeArray = response;
+      }
+
+      const normalizedData = (animeArray || [])
+        .filter((item): item is NonNullable<typeof item> => item != null)
+        .map((item: any) => {
+          const id = item.anime_id;
+
+          let posterUrl = null;
+          if (item.poster) {
+            if (typeof item.poster === 'string') {
+              posterUrl = item.poster;
+            } else if (item.poster.huge) {
+              posterUrl = item.poster.huge;
+            } else if (item.poster.mega) {
+              posterUrl = item.poster.mega;
+            } else if (item.poster.big) {
+              posterUrl = item.poster.big;
+            } else if (item.poster.medium) {
+              posterUrl = item.poster.medium;
+            } else if (item.poster.small) {
+              posterUrl = item.poster.small;
+            }
+          }
+
+          let scoreStr = null;
+          if (item.rating?.average != null) {
+            const avg = item.rating.average;
+            scoreStr = avg != null ? String(avg.toFixed(2)) : null;
+          }
+
+          const kind = item.type?.alias ?? null;
+          const status = item.anime_status?.title || null;
+          const year = item.year || null;
+          const description = item.description || null;
+
+          return {
+            id: id,
+            name: item.title || '',
+            russian: item.title || null,
+            poster: posterUrl,
+            cover: null,
+            url: item.anime_url || String(id),
+            kind: kind,
+            score: scoreStr,
+            status: status,
+            episodes: item.episodes || null,
+            episodes_aired: item.episodes_aired || null,
+            aired_on: item.aired_on || null,
+            released_on: item.released_on || null,
+            title: item.title,
+            description: description,
+            duration: item.duration,
+            rating: item.rating,
+            genres: item.genres,
+            year: year,
+          };
+        });
+
+      return {
+        data: normalizedData,
+        page: 1,
+        total_pages: 1,
+        total: normalizedData.length,
+      };
+    },
+    enabled: !!query.trim(),
+  });
+}
+
+// =============================================================================
 // ANIME DETAIL
 // =============================================================================
 
@@ -199,6 +293,16 @@ export function useGenres() {
     queryFn: async () => {
       const { data } = await animeApi.getGenres();
       return data;
+    },
+  });
+}
+
+export function useGenreSearch() {
+  return useQuery({
+    queryKey: ['genre', 'search'],
+    queryFn: async () => {
+      const result = await animeApi.getGenres();
+      return result ?? { genres: [] };
     },
   });
 }
