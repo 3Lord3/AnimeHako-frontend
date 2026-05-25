@@ -502,24 +502,52 @@ export const animeApi = {
   getCatalog: (params?: {
     page?: number;
     limit?: number;
+    q?: string;
     search?: string;
     genre?: string | string[];
-    year?: string;
+    from_year?: number;
+    to_year?: number;
     kind?: string;
     status?: string;
     order?: string;
     mylist?: string;
+    min_rating?: number;
   }) => {
-    // YummyAnime API uses /anime with limit/offset pagination
-    // Response format: { response: [...anime items...] }
     const offset = params?.page ? (params.page - 1) * (params.limit || 20) : undefined;
+    const searchQuery = params?.q || params?.search;
+    const queryParams = {
+      ...params,
+      q: searchQuery,
+      search: undefined,
+      offset,
+      page: undefined,
+    };
+    
+    // Handle genre parameter - join array with comma or use string directly
+    if (queryParams.genre) {
+      if (Array.isArray(queryParams.genre)) {
+        queryParams.genres = queryParams.genre.join(',') as any;
+      } else {
+        queryParams.genres = queryParams.genre;
+      }
+      queryParams.genre = undefined;
+    }
+    
     return api.get<{ response: any[] }>('/anime', { 
+      params: queryParams,
+    }).then(res => res.data.response);
+  },
+
+  search: (query: string, limit: number = 30) => {
+    const safeLimit = Math.min(limit, 30);
+    return api.get<{ response: any[] }>('/search', {
       params: {
-        ...params,
-        offset,
-        // Remove page as API uses offset
-        page: undefined,
-      } 
+        q: query,
+        limit: safeLimit,
+      },
+      paramsSerializer: (params) => {
+        return `q=${encodeURIComponent(params.q)}&limit=${params.limit}`;
+      }
     }).then(res => res.data.response);
   },
 
@@ -555,7 +583,8 @@ export const animeApi = {
     }).catch(() => null),
 
   getGenres: () =>
-    api.get<GenreResponse[]>('/anime/genres'),
+    api.get<{ response: { genres: GenreResponse[]; groups: unknown[] } }>('/anime/genres')
+      .then(res => res.data.response || { genres: [] }),
 };
 
 // =============================================================================

@@ -364,10 +364,10 @@ export interface UserAnimeResponse {
 // =============================================================================
 
 export interface GenreResponse {
-  id: number;
-  name: string;
-  russian: string | null;
-  kind: string | null;
+  title: string;
+  href: string;
+  value: number;
+  group_id: number;
 }
 
 // Legacy alias
