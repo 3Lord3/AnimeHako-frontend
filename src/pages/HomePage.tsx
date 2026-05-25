@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useAnimeList, useGenres, useDebounce, useUserAnimeList } from '@/hooks';
+import { useAnimeList, useDebounce, useUserAnimeList, useGenreSearch } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +30,10 @@ export function HomePage() {
       setSearchInput(search);
     }
   }, [search]);
+
+  useEffect(() => {
+    isUserTypingRef.current = false;
+  }, [searchInput]);
 
   const clearSearch = () => {
     setSearchInput('');
@@ -62,13 +66,13 @@ export function HomePage() {
     page: 1,
     limit: 100,
     search: search || undefined,
-    genre: genres ? genres.split(',') : undefined,
+    genre: genres || undefined,
     year: year || undefined,
     order: sort === 'rating' ? 'score' : sort === 'year' ? 'aired_on' : sort || undefined,
   };
 
   const { data: animeData, isLoading } = useAnimeList(queryParams);
-  const { data: genresData } = useGenres();
+  const { data: genresData } = useGenreSearch();
   const { data: userAnimeList } = useUserAnimeList();
 
   const updateParams = (key: string, value: string) => {
@@ -99,14 +103,11 @@ export function HomePage() {
 
   // Filter genres by search
   const filteredGenres = useMemo(() => {
-    if (!genresData) return [];
-    // Ensure genresData is an array
-    const genresArray = Array.isArray(genresData) ? genresData : (genresData as any).data || [];
-    if (!genreSearchInput) return genresArray;
+    if (!genresData?.genres) return [];
+    if (!genreSearchInput) return genresData.genres;
     const searchLower = genreSearchInput.toLowerCase();
-    return genresArray.filter((genre: any) => 
-      (genre.name?.toLowerCase().includes(searchLower)) || 
-      (genre.russian?.toLowerCase().includes(searchLower))
+    return genresData.genres.filter((genre) => 
+      genre.title.toLowerCase().includes(searchLower)
     );
   }, [genresData, genreSearchInput]);
 
@@ -229,14 +230,14 @@ export function HomePage() {
                     className="mb-2"
                   />
                   <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                    {filteredGenres.map((genre: { id: number; name: string; russian: string | null }) => (
+                    {filteredGenres.map((genre) => (
                       <Badge
-                        key={genre.id}
-                        variant={genres.split(',').includes(genre.name) ? 'default' : 'secondary'}
+                        key={genre.value}
+                        variant={genres.split(',').includes(genre.href) ? 'default' : 'secondary'}
                         className="cursor-pointer"
-                        onClick={() => toggleGenre(genre.name)}
+                        onClick={() => toggleGenre(genre.href)}
                       >
-                        {genre.russian || genre.name}
+                        {genre.title}
                       </Badge>
                     ))}
                   </div>
@@ -257,7 +258,7 @@ export function HomePage() {
                     className="cursor-pointer"
                     onClick={() => setFiltersOpen(false)}
                   >
-                    Готово
+                    Применить
                   </Button>
                 </div>
               </div>
