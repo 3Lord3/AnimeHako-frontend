@@ -3,14 +3,14 @@ import { Search, X, Plus, Loader2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAnimeList } from '@/hooks';
 import { useDebounce } from '@/hooks/useDebounce';
-import type { AnimeListItem } from '@/types';
+import type { YummyUserAnimeRate } from '@/types';
 import { cn } from '@/lib/utils';
-import { getImageUrl } from '@/lib/imageUrl';
+import { getPosterUrl } from '@/lib/imageUrl';
 
 interface TournamentParticipantSelectorProps {
-  completedAnime: AnimeListItem[];
-  selectedAnime: AnimeListItem[];
-  onSelectionChange: (anime: AnimeListItem[]) => void;
+  completedAnime: YummyUserAnimeRate[];
+  selectedAnime: YummyUserAnimeRate[];
+  onSelectionChange: (anime: YummyUserAnimeRate[]) => void;
 }
 
 export function TournamentParticipantSelector({
@@ -33,28 +33,37 @@ export function TournamentParticipantSelector({
   // Filter out already selected or completed anime
   const availableResults = (searchResults?.data || []).filter(
     (anime) =>
-      !selectedAnime.some((a) => a.id === anime.id) &&
-      !completedAnime.some((a) => a.id === anime.id)
+      !selectedAnime.some((a) => a.anime_id === anime.id) &&
+      !completedAnime.some((a) => a.anime_id === anime.id)
   );
 
   const handleAddAllCompleted = () => {
     const remaining = completedAnime.filter(
-      (anime) => !selectedAnime.some((a) => a.id === anime.id)
+      (anime) => !selectedAnime.some((a) => a.anime_id === anime.anime_id)
     );
     onSelectionChange([...selectedAnime, ...remaining]);
     setSearchQuery('');
     setShowDropdown(false);
   };
 
-  const handleAddFromSearch = (anime: AnimeListItem) => {
-    onSelectionChange([...selectedAnime, anime]);
+  const handleAddFromSearch = (anime: { id: number; title: string; poster?: { medium?: string; small?: string }; anime_url?: string; rating?: { average?: number }; type?: { name: string; value: number; shortname: string; alias: string } }) => {
+    const rate: YummyUserAnimeRate = {
+      anime_id: anime.id,
+      anime_url: anime.anime_url || String(anime.id),
+      title: anime.title,
+      poster: anime.poster || { small: '', medium: '', big: '', huge: '', fullsize: '', mega: '' },
+      rating: anime.rating?.average || 0,
+      type: anime.type || { name: '', value: 0, shortname: '', alias: '' },
+      user: undefined,
+    };
+    onSelectionChange([...selectedAnime, rate]);
     setSearchQuery('');
     setShowDropdown(false);
     setHighlightedIndex(-1);
   };
 
   const handleRemove = (animeId: number) => {
-    onSelectionChange(selectedAnime.filter((a) => a.id !== animeId));
+    onSelectionChange(selectedAnime.filter((a) => a.anime_id !== animeId));
   };
 
   const handleClearAll = () => {
@@ -68,7 +77,7 @@ export function TournamentParticipantSelector({
   };
 
   const remaining = completedAnime.filter(
-    (anime) => !selectedAnime.some((a) => a.id === anime.id)
+    (anime) => !selectedAnime.some((a) => a.anime_id === anime.anime_id)
   );
 
   return (
@@ -118,7 +127,7 @@ export function TournamentParticipantSelector({
                       )}
                     >
                       <img
-                        src={getImageUrl(anime.poster)}
+                        src={getPosterUrl(anime)}
                         alt={anime.title}
                         className="w-8 h-11 sm:w-10 sm:h-14 object-cover rounded flex-shrink-0"
                       />
@@ -127,7 +136,7 @@ export function TournamentParticipantSelector({
                           {anime.title}
                         </p>
                         <p className="text-xs text-muted-foreground truncate">
-                          {anime.year || '—'} • {anime.genres?.slice(0, 2).join(', ') || '—'}
+                          {anime.year || '—'} • {anime.genres?.slice(0, 2).map((g) => g.title).join(', ') || '—'}
                         </p>
                       </div>
                       <Plus className="w-4 h-4 text-muted-foreground flex-shrink-0" />
@@ -181,12 +190,12 @@ export function TournamentParticipantSelector({
         <div className="grid grid-cols-3 xs:grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 sm:gap-3">
           {selectedAnime.map((anime) => (
             <div
-              key={anime.id}
-              onClick={() => handleRemove(anime.id)}
+              key={anime.anime_id}
+              onClick={() => handleRemove(anime.anime_id)}
               className="relative group aspect-[2/3] rounded-lg overflow-hidden cursor-pointer"
             >
               <img
-                src={getImageUrl(anime.poster)}
+                src={getPosterUrl(anime)}
                 alt={anime.title}
                 className="object-cover w-full h-full transition-all duration-200 group-hover:brightness-50"
               />

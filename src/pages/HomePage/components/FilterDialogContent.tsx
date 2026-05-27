@@ -6,7 +6,7 @@ import { Star } from 'lucide-react';
 import type { GenreResponse, TagResponse } from '@/types';
 
 interface FilterDialogContentProps {
-  genresData?: GenreResponse[];
+  genresData?: { genres: GenreResponse[] };
   tagsData?: TagResponse[];
   genres: string;
   yearParam: string;
@@ -53,6 +53,16 @@ export function FilterDialogContent({
     const searchLower = tagSearchInput.toLowerCase();
     return tagsData.filter((tag) => tag.name.toLowerCase().includes(searchLower));
   }, [tagsData, tagSearchInput]);
+
+  // Filter genres by search
+  const filteredGenres = useMemo(() => {
+    if (!genresData?.genres) return [];
+    if (!genreSearchInput) return genresData.genres;
+    const searchLower = genreSearchInput.toLowerCase();
+    return genresData.genres.filter((genre) => 
+      genre.title.toLowerCase().includes(searchLower)
+    );
+  }, [genresData, genreSearchInput]);
 
   return (
     <div className="space-y-6">
@@ -101,14 +111,14 @@ export function FilterDialogContent({
           className="mb-2"
         />
         <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-          {genresData?.map((genre) => (
+          {filteredGenres.map((genre) => (
             <Badge
-              key={genre.id}
-              variant={genres.split(',').includes(genre.name) ? 'default' : 'secondary'}
+              key={genre.value}
+              variant={genres.split(',').includes(genre.href) ? 'default' : 'secondary'}
               className="cursor-pointer"
-              onClick={() => onToggleGenre(genre.name)}
+              onClick={() => onToggleGenre(genre.href)}
             >
-              {genre.name}
+              {genre.title}
             </Badge>
           ))}
         </div>

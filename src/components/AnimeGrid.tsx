@@ -1,9 +1,9 @@
 import { AnimeCard } from './AnimeCard';
-import type { AnimeListItem, UserAnimeResponse } from '@/types';
+import type { AnimeListItem, UserAnimeRate } from '@/types';
 
 interface AnimeGridProps {
   anime: AnimeListItem[];
-  userAnimeList?: UserAnimeResponse[];
+  userAnimeList?: UserAnimeRate[];
   isLoading?: boolean;
   skeletonCount?: number;
 }
@@ -25,6 +25,7 @@ export function AnimeGrid({ anime, userAnimeList, isLoading, skeletonCount }: An
     return null;
   }
 
+  // Map anime_id to rate for quick lookup
   const userAnimeMap = userAnimeList ? new Map(userAnimeList.map(ua => [ua.anime_id, ua])) : new Map();
 
   return (
@@ -36,7 +37,7 @@ export function AnimeGrid({ anime, userAnimeList, isLoading, skeletonCount }: An
             key={item.id} 
             anime={item} 
             userStatus={userAnime?.status}
-            isFavorite={userAnime?.is_favorite}
+            isFavorite={userAnime?.text?.includes('favorite') || false}
           />
         );
       })}

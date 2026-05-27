@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useUserAnimeList } from '@/hooks';
 import { useTournament, type Pair } from '@/hooks/useTournament';
-import type { AnimeListItem } from '@/types';
+import type { YummyUserAnimeRate, AnimeCatalogItem } from '@/types';
 import { TournamentIntro } from './components/TournamentIntro';
 import { TournamentMatch } from './components/TournamentMatch';
 import { TournamentResults } from './components/TournamentResults';
@@ -25,11 +25,26 @@ export function AnimeTournamentPage() {
     resetRound,
   } = useTournament();
   
-  const completedAnime = completedList?.map(item => item.anime) || [];
-  
-  const handleStart = (selectedAnime: AnimeListItem[]) => {
+  const completedAnime: YummyUserAnimeRate[] = completedList || [];
+
+  const handleStart = (selectedAnime: YummyUserAnimeRate[]) => {
     if (selectedAnime.length >= 4) {
-      initializeTournament(selectedAnime);
+      const animeItems: AnimeCatalogItem[] = selectedAnime.map(rate => ({
+        id: rate.anime_id,
+        title: rate.title,
+        poster: rate.poster,
+        type: rate.type,
+        rating: { average: rate.rating, counters: 0 },
+        year: rate.year,
+        genres: rate.genres,
+        anime_url: rate.anime_url,
+        anime_status: rate.anime_status,
+        description: '',
+        views: 0,
+        season: 1,
+        episodes: { aired: 0, count: 0 },
+      }));
+      initializeTournament(animeItems);
       setIsStarted(true);
       setPairQueue([]);
       setActivePair(null);

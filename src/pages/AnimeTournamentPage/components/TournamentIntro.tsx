@@ -3,11 +3,11 @@ import { Link } from 'react-router-dom';
 import { Play, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TournamentParticipantSelector } from './TournamentParticipantSelector';
-import type { AnimeListItem } from '@/types';
+import type { YummyUserAnimeRate } from '@/types';
 
 interface TournamentIntroProps {
-  completedAnime: AnimeListItem[];
-  onStart: (selectedAnime: AnimeListItem[]) => void;
+  completedAnime: YummyUserAnimeRate[];
+  onStart: (selectedAnime: YummyUserAnimeRate[]) => void;
 }
 
 export function TournamentIntro({ completedAnime, onStart }: TournamentIntroProps) {

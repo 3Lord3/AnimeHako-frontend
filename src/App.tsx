@@ -38,7 +38,7 @@ export function App() {
             <Route index element={<HomePage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
-            <Route path="anime/:id" element={<AnimeDetailPage />} />
+            <Route path="anime/:url" element={<AnimeDetailPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="profile/anime" element={
               <ProtectedRoute>

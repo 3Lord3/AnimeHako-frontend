@@ -1,4 +1,17 @@
-import type { AnimeListItem, TournamentParticipant, Pair, Round } from './tournament-types';
+import type { TournamentParticipant, Pair, Round } from './tournament-types';
+import type { AnimeCatalogItem } from '@/types';
+
+/**
+ * Участник турнира (для локального использования в утилитах)
+ */
+export interface LocalAnimeItem {
+  id: number;
+  name: string;
+  russian: string | null;
+  poster: string | null;
+  score: string | null;
+  [key: string]: any;
+}
 
 /**
  * Перемешать массив (Fisher-Yates shuffle)
@@ -58,7 +71,7 @@ export function createPairsForRound(
  * Построить структуру раундов турнира.
  * Каждый раунд имеет пары, победитель каждой пары переходит в следующий раунд.
  */
-export function buildTournamentRounds(animeList: AnimeListItem[]): Round[] {
+export function buildTournamentRounds(animeList: AnimeCatalogItem[]): Round[] {
   const shuffled = shuffleArray(animeList);
 
   const participants: TournamentParticipant[] = shuffled.map((anime, index) => ({
@@ -88,7 +101,7 @@ export function buildTournamentRounds(animeList: AnimeListItem[]): Round[] {
     for (let i = 0; i < nextRoundSize; i++) {
       nextParticipants.push({
         id: `placeholder-${roundIndex + 1}-${i}`,
-        anime: { id: -1, title: 'TBD' } as AnimeListItem,
+        anime: { id: -1, name: 'TBD', russian: null, poster: null, score: null } as AnimeCatalogItem,
         seed: i + 1,
         eliminated: false,
         finalPosition: null,

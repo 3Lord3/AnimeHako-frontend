@@ -33,7 +33,9 @@ describe('constants', () => {
       expect(STATUS_COLORS.watching).toBe('bg-blue-500 text-white');
       expect(STATUS_COLORS.completed).toBe('bg-green-500 text-white');
       expect(STATUS_COLORS.dropped).toBe('bg-red-500 text-white');
-      expect(STATUS_COLORS.planned).toBe('bg-yellow-500 text-white');
+      expect(STATUS_COLORS.planned).toBe('bg-yellow-600 text-white');
+      expect(STATUS_COLORS.paused).toBe('bg-yellow-500 text-white');
+      expect(STATUS_COLORS.favourite).toBe('bg-pink-500 text-white');
     });
   });
 
@@ -42,7 +44,9 @@ describe('constants', () => {
       expect(STATUS_LABELS.watching).toBe('Смотрю');
       expect(STATUS_LABELS.completed).toBe('Просмотрено');
       expect(STATUS_LABELS.dropped).toBe('Брошено');
-      expect(STATUS_LABELS.planned).toBe('Запланировано');
+      expect(STATUS_LABELS.planned).toBe('В планах');
+      expect(STATUS_LABELS.paused).toBe('Отложено');
+      expect(STATUS_LABELS.favourite).toBe('Любимое');
     });
   });
 
@@ -52,7 +56,9 @@ describe('constants', () => {
       expect(ALL_STATUSES).toContain('completed');
       expect(ALL_STATUSES).toContain('dropped');
       expect(ALL_STATUSES).toContain('planned');
-      expect(ALL_STATUSES.length).toBe(4);
+      expect(ALL_STATUSES).toContain('paused');
+      expect(ALL_STATUSES).toContain('favourite');
+      expect(ALL_STATUSES.length).toBe(6);
     });
   });
 });

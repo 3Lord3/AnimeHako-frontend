@@ -60,15 +60,15 @@ export function Layout() {
                 <DropdownMenuTrigger>
                   <span className="cursor-pointer">
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={user.avatar || undefined} alt={user.username} />
-                      <AvatarFallback>{user.username[0]?.toUpperCase()}</AvatarFallback>
+                      <AvatarImage src={user.avatars?.big || undefined} alt={user.nickname} />
+                      <AvatarFallback>{user.nickname?.[0]?.toUpperCase()}</AvatarFallback>
                     </Avatar>
                   </span>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent className="w-56" align="end">
                   <div className="flex items-center gap-2 p-2">
                     <div className="flex flex-col space-y-1">
-                      <p className="text-sm font-medium leading-none">{user.username}</p>
+                      <p className="text-sm font-medium leading-none">{user.nickname}</p>
                     </div>
                   </div>
                   <DropdownMenuSeparator />

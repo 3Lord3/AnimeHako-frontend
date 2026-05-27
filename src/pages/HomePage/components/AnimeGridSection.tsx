@@ -1,9 +1,9 @@
 import { AnimeGrid } from '@/components/AnimeGrid';
-import type { AnimeListItem, UserAnimeResponse } from '@/types';
+import type { AnimeListItem, UserAnimeRate } from '@/types';
 
 interface AnimeGridSectionProps {
   anime: AnimeListItem[];
-  userAnimeList?: UserAnimeResponse[];
+  userAnimeList?: UserAnimeRate[];
   isLoading: boolean;
 }
 
