@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { useAnimeList, useGenres, useTags, useDebounce, useUserAnimeList } from '@/hooks';
+import { useAnimeList, useDebounce, useUserAnimeList, useGenreSearch } from '@/hooks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -16,10 +16,10 @@ export function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const search = searchParams.get('search') || '';
   const genres = searchParams.get('genres') || '';
-  const year = searchParams.get('year') ? parseInt(searchParams.get('year')!) : undefined;
+  const year = searchParams.get('year') || '';
   const sort = searchParams.get('sort') || '';
   const minRating = searchParams.get('rating') ? parseFloat(searchParams.get('rating')!) : undefined;
-  const tags = searchParams.get('tags') || '';
+  const kind = searchParams.get('kind') || '';
 
   const [searchInput, setSearchInput] = useState(search);
   const isUserTypingRef = useRef(false);
@@ -30,6 +30,10 @@ export function HomePage() {
       setSearchInput(search);
     }
   }, [search]);
+
+  useEffect(() => {
+    isUserTypingRef.current = false;
+  }, [searchInput]);
 
   const clearSearch = () => {
     setSearchInput('');
@@ -42,9 +46,7 @@ export function HomePage() {
   // Debounce search input
   const debouncedSearch = useDebounce(searchInput, 300);
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [tagSearchInput, setTagSearchInput] = useState('');
   const [genreSearchInput, setGenreSearchInput] = useState('');
-  const yearParam = year ? String(year) : '';
 
   // Update URL when debounced search changes
   useEffect(() => {
@@ -59,19 +61,18 @@ export function HomePage() {
     }
   }, [debouncedSearch, search, searchParams, setSearchParams]);
 
-  // Load all anime (limit=100) for virtual scrolling
-  const { data: animeData, isLoading } = useAnimeList({
+  // Build query params for YummyAnime API
+  const queryParams = {
     page: 1,
     limit: 100,
     search: search || undefined,
-    genres: genres || undefined,
-    year,
-    sort: sort || undefined,
-    min_rating: minRating,
-    tags,
-  });
-  const { data: genresData } = useGenres();
-  const { data: tagsData } = useTags();
+    genre: genres || undefined,
+    year: year || undefined,
+    order: sort === 'rating' ? 'score' : sort === 'year' ? 'aired_on' : sort || undefined,
+  };
+
+  const { data: animeData, isLoading } = useAnimeList(queryParams);
+  const { data: genresData } = useGenreSearch();
   const { data: userAnimeList } = useUserAnimeList();
 
   const updateParams = (key: string, value: string) => {
@@ -84,41 +85,34 @@ export function HomePage() {
     setSearchParams(params);
   };
 
-  const toggleGenre = (genre: string) => {
+  const toggleGenre = (genreName: string) => {
     const currentGenres = genres ? genres.split(',') : [];
-    const newGenres = currentGenres.includes(genre)
-      ? currentGenres.filter((g) => g !== genre)
-      : [...currentGenres, genre];
+    const newGenres = currentGenres.includes(genreName)
+      ? currentGenres.filter((g) => g !== genreName)
+      : [...currentGenres, genreName];
     updateParams('genres', newGenres.join(','));
   };
 
-  const toggleYear = (yearValue: number) => {
-    const currentYears = year ? String(year).split(',') : [];
-    const yearStr = String(yearValue);
-    const newYears = currentYears.includes(yearStr)
-      ? currentYears.filter((y) => y !== yearStr)
-      : [...currentYears, yearStr];
+  const toggleYear = (yearValue: string) => {
+    const currentYears = year ? year.split(',') : [];
+    const newYears = currentYears.includes(yearValue)
+      ? currentYears.filter((y) => y !== yearValue)
+      : [...currentYears, yearValue];
     updateParams('year', newYears.join(','));
   };
 
-  const toggleTag = (tag: string) => {
-    const currentTags = tags ? tags.split(',') : [];
-    const newTags = currentTags.includes(tag)
-      ? currentTags.filter((t) => t !== tag)
-      : [...currentTags, tag];
-    updateParams('tags', newTags.join(','));
-  };
-
-  // Filter tags by search
-  const filteredTags = useMemo(() => {
-    if (!tagsData) return [];
-    if (!tagSearchInput) return tagsData;
-    const searchLower = tagSearchInput.toLowerCase();
-    return tagsData.filter((tag) => tag.name.toLowerCase().includes(searchLower));
-  }, [tagsData, tagSearchInput]);
+  // Filter genres by search
+  const filteredGenres = useMemo(() => {
+    if (!genresData?.genres) return [];
+    if (!genreSearchInput) return genresData.genres;
+    const searchLower = genreSearchInput.toLowerCase();
+    return genresData.genres.filter((genre) => 
+      genre.title.toLowerCase().includes(searchLower)
+    );
+  }, [genresData, genreSearchInput]);
 
   // Get years range (2010-2025)
-  const allYears = [2025, 2024, 2023, 2022, 2021, 2020, 2019, 2018, 2017, 2016, 2015, 2014, 2013, 2012, 2011, 2010];
+  const allYears = ['2025', '2024', '2023', '2022', '2021', '2020', '2019', '2018', '2017', '2016', '2015', '2014', '2013', '2012', '2011', '2010'];
 
   // Rating filter options
   const ratingOptions = [9, 8, 7, 6];
@@ -129,12 +123,12 @@ export function HomePage() {
     params.delete('genres');
     params.delete('year');
     params.delete('rating');
-    params.delete('tags');
     params.delete('sort');
+    params.delete('kind');
     setSearchParams(params);
   };
 
-  const hasActiveFilters = genres || year || minRating || tags || sort;
+  const hasActiveFilters = genres || year || minRating || sort || kind;
 
   return (
     <div className="space-y-6">
@@ -216,7 +210,7 @@ export function HomePage() {
                     {allYears.map((y) => (
                       <Badge
                         key={y}
-                        variant={yearParam.split(',').includes(String(y)) ? 'default' : 'secondary'}
+                        variant={year.split(',').includes(y) ? 'default' : 'secondary'}
                         className="cursor-pointer"
                         onClick={() => toggleYear(y)}
                       >
@@ -236,37 +230,14 @@ export function HomePage() {
                     className="mb-2"
                   />
                   <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                    {genresData?.map((genre) => (
+                    {filteredGenres.map((genre) => (
                       <Badge
-                        key={genre.id}
-                        variant={genres.split(',').includes(genre.name) ? 'default' : 'secondary'}
+                        key={genre.value}
+                        variant={genres.split(',').includes(genre.href) ? 'default' : 'secondary'}
                         className="cursor-pointer"
-                        onClick={() => toggleGenre(genre.name)}
+                        onClick={() => toggleGenre(genre.href)}
                       >
-                        {genre.name}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Tags filter with search */}
-                <div className="space-y-2">
-                  <h4 className="font-medium text-sm">Теги</h4>
-                  <Input
-                    placeholder="Поиск тегов..."
-                    value={tagSearchInput}
-                    onChange={(e) => setTagSearchInput(e.target.value)}
-                    className="mb-2"
-                  />
-                  <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                    {filteredTags.slice(0, 50).map((tag) => (
-                      <Badge
-                        key={tag.id}
-                        variant={tags.split(',').includes(tag.name) ? 'default' : 'secondary'}
-                        className="cursor-pointer"
-                        onClick={() => toggleTag(tag.name)}
-                      >
-                        {tag.name}
+                        {genre.title}
                       </Badge>
                     ))}
                   </div>
@@ -287,7 +258,7 @@ export function HomePage() {
                     className="cursor-pointer"
                     onClick={() => setFiltersOpen(false)}
                   >
-                    Готово
+                    Применить
                   </Button>
                 </div>
               </div>
@@ -319,7 +290,7 @@ export function HomePage() {
           {/* Active filters badges */}
           {year && (
             <Button variant="secondary" size="sm" onClick={() => updateParams('year', '')}>
-              Год: {yearParam.split(',').length > 1 ? `${yearParam.split(',').length} годов` : yearParam}
+              Год: {year.split(',').length > 1 ? `${year.split(',').length} годов` : year}
               <X className="w-3 h-3 ml-1" />
             </Button>
           )}
@@ -335,13 +306,7 @@ export function HomePage() {
               <X className="w-3 h-3 ml-1" />
             </Button>
           )}
-          {tags && (
-            <Button variant="secondary" size="sm" onClick={() => updateParams('tags', '')}>
-              Теги: {tags.split(',').length}
-              <X className="w-3 h-3 ml-1" />
-            </Button>
-          )}
-          {(year || minRating || genres || tags) && (
+          {hasActiveFilters && (
             <Button variant="secondary" size="sm" onClick={clearFiltersOnly}>
               Очистить фильтры
             </Button>

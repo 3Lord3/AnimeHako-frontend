@@ -13,6 +13,7 @@ const AnimeDetailPage = lazy(() => import('@/pages/AnimeDetailPage').then(m => (
 const ProfilePage = lazy(() => import('@/pages/ProfilePage').then(m => ({ default: m.ProfilePage })));
 const UserAnimeListPage = lazy(() => import('@/pages/UserAnimeListPage').then(m => ({ default: m.UserAnimeListPage })));
 const AnimeMatcherPage = lazy(() => import('@/pages/AnimeMatcherPage').then(m => ({ default: m.AnimeMatcherPage })));
+const AnimeTournamentPage = lazy(() => import('@/pages/AnimeTournamentPage').then(m => ({ default: m.AnimeTournamentPage })));
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { data: user, isLoading } = useUser();
@@ -37,7 +38,7 @@ export function App() {
             <Route index element={<HomePage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="register" element={<RegisterPage />} />
-            <Route path="anime/:id" element={<AnimeDetailPage />} />
+            <Route path="anime/:url" element={<AnimeDetailPage />} />
             <Route path="profile" element={<ProfilePage />} />
             <Route path="profile/anime" element={
               <ProtectedRoute>
@@ -45,6 +46,11 @@ export function App() {
               </ProtectedRoute>
             } />
             <Route path="matcher" element={<AnimeMatcherPage />} />
+            <Route path="tournament" element={
+              <ProtectedRoute>
+                <AnimeTournamentPage />
+              </ProtectedRoute>
+            } />
           </Route>
         </Routes>
       </Suspense>
