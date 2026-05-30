@@ -163,10 +163,10 @@ export function TournamentParticipantSelector({
           {remaining.length > 0 && (
             <button
               onClick={handleAddAllCompleted}
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-input bg-background hover:bg-accent rounded-md transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-input bg-background text-foreground hover:bg-accent rounded-md transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Добавить все ({remaining.length})
+              Просмотренные ({remaining.length})
             </button>
           )}
           {selectedAnime.length > 0 && (
