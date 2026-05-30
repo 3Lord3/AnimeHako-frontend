@@ -13,15 +13,6 @@ export const STATUS_ICONS: Record<StatusType, React.ReactNode> = {
   favourite: <Star size={24} strokeWidth={2.5} />,
 };
 
-export const STATUS_COLORS: Record<StatusType, string> = {
-  watching: 'bg-blue-500 text-white',
-  completed: 'bg-green-500 text-white',
-  paused: 'bg-yellow-500 text-white',
-  dropped: 'bg-red-500 text-white',
-  planned: 'bg-yellow-600 text-white',
-  favourite: 'bg-pink-500 text-white',
-};
-
 export const STATUS_LABELS: Record<StatusType, string> = {
   watching: 'Смотрю',
   completed: 'Просмотрено',
@@ -29,6 +20,16 @@ export const STATUS_LABELS: Record<StatusType, string> = {
   dropped: 'Брошено',
   planned: 'В планах',
   favourite: 'Любимое',
+};
+
+// Theme-adaptive status colors
+export const STATUS_COLORS: Record<StatusType, string> = {
+  watching: 'bg-blue-500 text-white dark:bg-blue-600',
+  completed: 'bg-green-500 text-white dark:bg-green-600',
+  paused: 'bg-yellow-500 text-gray-900 dark:bg-yellow-600 dark:text-gray-900',
+  dropped: 'bg-red-500 text-white dark:bg-red-600',
+  planned: 'bg-yellow-600 text-gray-900 dark:bg-yellow-700 dark:text-gray-900',
+  favourite: 'bg-pink-500 text-white dark:bg-pink-600',
 };
 
 // статусы которые есть в YummyAnime API (id списка)
