@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { TournamentCard } from './TournamentCard';
 import { MatchHeader } from './MatchHeader';
 import { ConfirmationDialog } from './ConfirmationDialog';
@@ -80,8 +80,16 @@ export function TournamentMatch({
       />
 
       {/* Match container - cards take full available space */}
-      <div className="flex-1 flex items-center justify-center p-2 sm:p-4 md:p-8 min-h-0 overflow-y-auto sm:overflow-visible">
-        <div className="relative w-full h-full flex flex-col sm:flex-row sm:items-center sm:justify-center gap-3 sm:gap-6 md:grid md:grid-cols-2 md:gap-6 md:relative">
+      <div className="flex-1 flex items-center justify-center p-1 sm:p-4 md:p-8 min-h-0 overflow-y-auto sm:overflow-visible">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={match.id}
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9 }}
+            transition={{ duration: 0.3 }}
+            className="relative w-full h-full flex flex-col sm:flex-row sm:items-center sm:justify-center gap-3 sm:gap-6 md:grid md:grid-cols-2 md:gap-6 md:relative"
+          >
           {/* Participant 1 */}
           <ParticipantCard
             participant={participant1}
@@ -110,7 +118,8 @@ export function TournamentMatch({
             showResult={showResult}
             onSelect={handleSelect}
           />
-        </div>
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Mobile VS indicator */}
@@ -165,18 +174,10 @@ function ParticipantCard({
           anime={participant.anime}
           isWinner={isWinner}
           isEliminated={isEliminated}
+          isSelected={isSelected}
           onClick={isActive ? () => onSelect(participant) : undefined}
           compact
         />
-        {isSelected && showResult && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="absolute inset-0 flex items-center justify-center bg-green-500/30 rounded-xl"
-          >
-            <span className="text-white font-bold text-2xl sm:text-4xl drop-shadow-lg">✓</span>
-          </motion.div>
-        )}
       </div>
     </motion.div>
   );
