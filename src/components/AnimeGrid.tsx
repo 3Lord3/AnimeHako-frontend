@@ -1,5 +1,6 @@
 import { AnimeCard } from './AnimeCard';
 import type { AnimeListItem, UserAnimeRate } from '@/types';
+import { mapListIdToStatus } from '@/types';
 
 interface AnimeGridProps {
   anime: AnimeListItem[];
@@ -36,8 +37,8 @@ export function AnimeGrid({ anime, userAnimeList, isLoading, skeletonCount }: An
           <AnimeCard 
             key={item.id} 
             anime={item} 
-            userStatus={userAnime?.status}
-            isFavorite={userAnime?.text?.includes('favorite') || false}
+            userStatus={userAnime ? mapListIdToStatus(userAnime.user?.list?.list?.id) : undefined}
+            isFavorite={userAnime?.user?.list?.is_fav || false}
           />
         );
       })}

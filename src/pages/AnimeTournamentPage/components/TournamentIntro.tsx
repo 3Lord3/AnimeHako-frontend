@@ -89,7 +89,7 @@ export function TournamentIntro({ completedAnime, onStart }: TournamentIntroProp
           </div>
           <div className="p-3 sm:p-4 bg-muted/50 border border-border rounded-lg">
             <div className="text-xl sm:text-2xl mb-1 sm:mb-2">👑</div>
-            <p className="text-foreground text-xs sm:text-sm">Определяем абсолютного победителя</p>
+            <p className="text-foreground text-xs sm:text-sm">Определяем лучшее аниме</p>
           </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { getImageUrl } from '@/lib/imageUrl';
-import { STATUS_ICONS, STATUS_COLORS, ALL_STATUSES, type StatusType } from '@/types/constants';
+import { STATUS_ICONS, STATUS_COLORS, FAVORITE_ICON, ALL_STATUSES, type StatusType } from '@/types/constants';
 import { UserAnimeListPageSkeleton } from '@/components/loaders/PageSkeletons';
 import type { YummyUserAnimeRate } from '@/types';
 import { mapListIdToStatus } from '@/types';
@@ -76,7 +76,6 @@ export function UserAnimeListPage() {
           <Button
             key={s}
             variant={statusParam === s ? 'default' : 'outline'}
-            className={statusParam === s ? 'text-white' : 'text-foreground'}
             onClick={() =>
               setSearchParams(statusParam === s ? {} : { status: s })
             }
@@ -86,7 +85,6 @@ export function UserAnimeListPage() {
         ))}
         <Button
           variant={isFavorites ? 'default' : 'outline'}
-          className={isFavorites ? 'text-white' : 'text-foreground'}
           onClick={() => setSearchParams(isFavorites ? {} : { favorites: 'true' })}
         >
           Любимое
@@ -127,7 +125,7 @@ export function UserAnimeListPage() {
                   {isFavorite && (
                     <Badge title="Избранное" className="bg-pink-500 text-white h-9 w-9 p-0 rounded-full cursor-pointer">
                       <span className="flex items-center justify-center w-full h-full text-white">
-                        ♥
+                        {FAVORITE_ICON}
                       </span>
                     </Badge>
                   )}

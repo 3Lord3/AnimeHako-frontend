@@ -28,7 +28,8 @@ export function Layout() {
       <header className="border-b border-border">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <Link to="/" className="text-2xl font-bold text-foreground" onClick={handleLogoClick}>
-            AnimeHako
+            <span className="md:hidden">AH</span>
+            <span className="hidden md:inline">AnimeHako</span>
           </Link>
           <nav className="flex items-center gap-6 text-foreground">
             <Link

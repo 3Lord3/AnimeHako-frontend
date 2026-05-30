@@ -109,7 +109,7 @@ export function TournamentParticipantSelector({
 
         {/* Dropdown */}
         {showDropdown && (
-          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden max-h-48 sm:max-h-64 overflow-y-auto">
+          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border-border rounded-lg shadow-lg overflow-hidden max-h-48 sm:max-h-64 overflow-y-auto">
             {isSearching ? (
               <div className="flex items-center justify-center py-4 text-muted-foreground">
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
@@ -163,10 +163,10 @@ export function TournamentParticipantSelector({
           {remaining.length > 0 && (
             <button
               onClick={handleAddAllCompleted}
-              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-input bg-background hover:bg-accent rounded-md transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-1.5 text-sm border border-input bg-background text-foreground hover:bg-accent rounded-md transition-colors"
             >
               <Plus className="w-4 h-4" />
-              Добавить все ({remaining.length})
+              Просмотренные ({remaining.length})
             </button>
           )}
           {selectedAnime.length > 0 && (

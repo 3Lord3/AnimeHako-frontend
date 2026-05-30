@@ -140,7 +140,7 @@ function SwipeCard({ anime, onSwipe, isActive }: SwipeCardProps) {
             style={{ opacity: swipeOpacity }}
           >
             <span className="text-white text-2xl font-bold text-center px-4">
-              {swipeDirection === 'right' ? 'В ЗАПЛАНИРОВАННОЕ' : 'ПРОПУСК'}
+              {swipeDirection === 'right' ? 'БУДУ СМОТРЕТЬ' : 'ПРОПУСК'}
             </span>
           </div>
         )}
@@ -297,7 +297,7 @@ export function AnimeMatcherPage() {
             onClick={() => navigate('/')}
             title="На главную"
           >
-            <Home className="w-6 h-6" />
+            <Home className="w-6 h-6 text-foreground" />
           </Button>
         </div>
 
@@ -336,7 +336,7 @@ export function AnimeMatcherPage() {
             onClick={() => currentAnime && navigate(`/anime/${currentAnime.anime_url}`)}
             title="Открыть страницу аниме"
           >
-            <ExternalLink className="w-6 h-6" />
+            <ExternalLink className="w-6 h-6 text-foreground" />
           </Button>
         </div>
       </div>
@@ -395,7 +395,7 @@ export function AnimeMatcherPage() {
               onClick={() => navigate('/')}
               title="На главную"
             >
-              <Home className="w-6 h-6" />
+              <Home className="w-6 h-6 text-foreground" />
             </Button>
             
             <Button
@@ -405,7 +405,7 @@ export function AnimeMatcherPage() {
               onClick={() => currentAnime && navigate(`/anime/${currentAnime.anime_url}`)}
               title="Страница аниме"
             >
-              <ExternalLink className="w-6 h-6" />
+              <ExternalLink className="w-6 h-6 text-foreground" />
             </Button>
             
             <Button 

@@ -137,7 +137,7 @@ export function AnimeDetailPage() {
               >
                 <Heart className={cn(
                   'w-5 h-5',
-                  isFavorite ? 'fill-current text-black' : 'text-foreground'
+                  isFavorite ? 'fill-current text-primary-foreground' : 'text-foreground'
                 )} />
               </Button>
               {statusOptions.map((status) => {
@@ -152,7 +152,7 @@ export function AnimeDetailPage() {
                     className="cursor-pointer"
                     title={STATUS_LABELS[status]}
                   >
-                    <span className={isActive ? 'text-black' : 'text-foreground'}>
+                    <span className={cn(isActive && 'text-primary-foreground')}>
                       {STATUS_ICONS[status]}
                     </span>
                   </Button>
