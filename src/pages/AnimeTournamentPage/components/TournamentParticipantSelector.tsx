@@ -109,7 +109,7 @@ export function TournamentParticipantSelector({
 
         {/* Dropdown */}
         {showDropdown && (
-          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border rounded-lg shadow-lg overflow-hidden max-h-48 sm:max-h-64 overflow-y-auto">
+          <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-popover border-border rounded-lg shadow-lg overflow-hidden max-h-48 sm:max-h-64 overflow-y-auto">
             {isSearching ? (
               <div className="flex items-center justify-center py-4 text-muted-foreground">
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
