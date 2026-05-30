@@ -10,7 +10,7 @@ import {
   DialogContent,
   DialogTitle,
 } from '@/components/ui/dialog';
-import { Search, Filter, Star, Calendar, X } from 'lucide-react';
+import { Search, Filter, Star, X } from 'lucide-react';
 
 export function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -266,28 +266,8 @@ export function HomePage() {
           </Dialog>
         </div>
 
-        {/* Quick filters row */}
+        {/* Active filters badges */}
         <div className="flex gap-2 flex-wrap items-center">
-          <Button
-            variant={sort === 'rating' ? 'default' : 'outline'}
-            size="sm"
-            className="cursor-pointer text-foreground"
-            onClick={() => updateParams('sort', sort === 'rating' ? '' : 'rating')}
-          >
-            <Star className="w-4 h-4 mr-1" />
-            По рейтингу
-          </Button>
-          <Button
-            variant={sort === 'year' ? 'default' : 'outline'}
-            size="sm"
-            className="cursor-pointer text-foreground"
-            onClick={() => updateParams('sort', sort === 'year' ? '' : 'year')}
-          >
-            <Calendar className="w-4 h-4 mr-1" />
-            По году
-          </Button>
-
-          {/* Active filters badges */}
           {year && (
             <Button variant="secondary" size="sm" onClick={() => updateParams('year', '')}>
               Год: {year.split(',').length > 1 ? `${year.split(',').length} годов` : year}
